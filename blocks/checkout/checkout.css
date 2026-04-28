@@ -1,0 +1,20 @@
+.checkout-layout { display: grid; grid-template-columns: 1fr 380px; gap: var(--spacing-xl); align-items: start; }
+.checkout-form h2, .checkout-summary h2 { font-size: var(--font-size-xl); margin: 0 0 var(--spacing-lg); }
+.checkout-fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-lg); }
+.form-group--full { grid-column: 1 / -1; }
+.checkout-error { font-size: var(--font-size-sm); color: var(--color-brand); margin-bottom: var(--spacing-md); }
+.checkout-submit { width: 100%; font-size: var(--font-size-base); padding: 0.875rem; border-radius: var(--radius-md); }
+.checkout-note { font-size: var(--font-size-xs); color: var(--color-muted); text-align: center; margin-top: var(--spacing-sm); }
+.checkout-summary { position: sticky; top: calc(var(--nav-height) + var(--spacing-md)); }
+.summary-items { display: flex; flex-direction: column; gap: var(--spacing-md); margin-bottom: var(--spacing-lg); }
+.summary-item { display: grid; grid-template-columns: 56px 1fr auto; gap: var(--spacing-sm); align-items: center; }
+.summary-item img { border-radius: var(--radius-sm); object-fit: cover; width: 56px; height: 56px; }
+.summary-item-title { font-size: var(--font-size-sm); font-weight: 600; margin: 0; }
+.summary-item-meta { font-size: var(--font-size-xs); color: var(--color-muted); margin: 0; }
+.summary-item-price { font-weight: 700; font-size: var(--font-size-sm); color: var(--color-brand); white-space: nowrap; margin: 0; }
+.summary-totals { border-top: 1px solid var(--color-border); padding-top: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-sm); }
+.summary-row { display: flex; justify-content: space-between; align-items: center; font-size: var(--font-size-sm); color: var(--color-muted); }
+.summary-total { font-size: var(--font-size-lg); color: var(--color-text); padding-top: var(--spacing-sm); border-top: 1px solid var(--color-border); }
+.checkout-empty { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-md); min-height: 240px; justify-content: center; text-align: center; }
+@media (max-width: 900px) { .checkout-layout { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .checkout-fields { grid-template-columns: 1fr; } }
