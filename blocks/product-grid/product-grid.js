@@ -48,51 +48,51 @@ function readOpts(block) {
   return opts;
 }
 
-function productCard(p, showDesc = false) {
-  const wished = isWishlisted(p.id);
+function productCard(product, showDescription = false) {
+  const firstImage = (product.images && product.images[0]) || "adokicks.png";
+  const wishActive = isWishlisted(product.id);
   return `
-    <article class="product-card" role="listitem">
-      <a href="/product?id=${encodeURIComponent(p.id)}" aria-label="View ${p.title}">
-        <img src="${p.images[0] || ''}" alt="${p.title}" loading="lazy" width="300" height="300">
+    <article class="product-card" role="listitem" aria-label="${product.title} product card">
+      <a href="product.html?id=${encodeURIComponent(product.id)}" aria-label="View ${product.title} details">
+        <img src="${firstImage}" alt="${product.title} shoe image" loading="lazy">
       </a>
       <div class="product-content">
-        <h3><a href="/product?id=${encodeURIComponent(p.id)}">${p.title}</a></h3>
-        <p class="brand-cat">${p.brand} · ${p.categoryLabel}</p>
-        <div class="price-line">
-          <strong>${formatCurrency(p.price)}</strong>
-          <span class="old-price">${formatCurrency(p.originalPrice)}</span>
-        </div>
-        ${showDesc && p.description ? `<p class="product-desc">${p.description}</p>` : ''}
-        <div class="card-actions-row">
-          <button class="heart-btn${wished ? ' active' : ''}"
-            data-action="wishlist" data-id="${p.id}"
-            aria-label="${wished ? 'Remove from' : 'Add to'} wishlist"
-            aria-pressed="${wished}">&#10084;</button>
-          <a href="/product?id=${encodeURIComponent(p.id)}" class="button secondary">Shop</a>
+        <h3><a href="product.html?id=${encodeURIComponent(product.id)}">${product.title}</a></h3>
+        <p>${product.brand} | ${CATEGORY_LABELS[product.category] || product.category}</p>
+        <p class="price-line"><strong>${formatCurrency(product.price)}</strong> <span class="old-price">${formatCurrency(product.originalPrice)}</span></p>
+        ${showDescription ? `<p>${product.description}</p>` : ""}
+        <div class="price-line card-actions-row">
+          <button class="heart-btn ${wishActive?"active":""}" type="button" data-action="wishlist-toggle" data-product-id="${product.id}" aria-label="Toggle wishlist for ${product.title}" title="Wishlist">&#10084;</button>
+          <a href="product.html?id=${encodeURIComponent(product.id)}" class="btn-secondary" aria-label="Shop ${product.title}">Shop</a>
         </div>
       </div>
-    </article>`;
+    </article>
+  `;
 }
 
 function renderTrending(block, products, opts) {
-  const limit = Number(opts.limit) || 8;
-  const sorted = [...products]
-    .sort((a, b) => (b.rating * b.reviews) - (a.rating * a.reviews))
-    .slice(0, limit);
+  // Extract heading and subtitle from first row of authored content
+  const firstRow = block.querySelector(':scope > div');
+  const heading = firstRow?.querySelector('h2')?.textContent.trim() || 'Trending Now';
+  const subtitle = firstRow?.querySelector('p')?.textContent.trim() || 'Top picks flying off the shelves right now.';
+
+  const source = [...products].sort((a, b) => (b.rating || 0) * (b.reviews || 0) - (a.rating || 0) * (a.reviews || 0));
+  const width = window.innerWidth || 1200;
+  const cols = width <= 480 ? 1 : width <= 680 ? 2 : width <= 1024 ? 3 : width <= 1600 ? 4 : 6;
+  const rows = width <= 680 ? 6 : 3;
+  const items = source.slice(0, Math.min(source.length, cols * rows));
 
   block.innerHTML = `
     <div class="section-card trending-wrap">
       <div class="trending-head">
-        <div>
-          <h2>Trending Now</h2>
-          <p>Top picks flying off the shelves right now.</p>
-        </div>
-        <a href="/categories" class="button secondary">View All</a>
+        <h2>${heading}</h2>
+        <p>${subtitle}</p>
       </div>
-      <div class="product-grid" role="list" aria-label="Trending products">
-        ${sorted.map((p) => productCard(p)).join('')}
+      <div class="product-grid trending-grid" role="list" aria-label="Trending products">
+        ${items.map(p => productCard(p)).join("")}
       </div>
-    </div>`;
+    </div>
+  `;
 }
 
 function renderFeatured(block, products, opts) {
