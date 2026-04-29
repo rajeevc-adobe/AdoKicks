@@ -12,10 +12,13 @@
   --header-offset: 78px;
   --radius: 14px;
   --shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+   --nav-height: 64px;
 }
 
 * { box-sizing: border-box; }
-
+header {
+  height: var(--nav-height);
+}
 html, body {
   margin: 0;
   padding: 0;
@@ -27,11 +30,13 @@ html, body {
 }
 
 body {
-  padding-top: var(--header-offset);
+  padding-top: calc(var(--header-offset) - 3rem);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
 }
+
+.section { margin: 0 0 1rem 0; }
 
 body.menu-open, body.search-open { overflow: hidden; }
 

@@ -10,10 +10,20 @@ function decorateVideo(block) {
   const rows = [...block.children];
   if (!rows.length) return;
 
-  const videoSrc = rows[0]?.querySelector('a')?.href
+  const videoSrcRaw = rows[0]?.querySelector('a')?.href
     || rows[0]?.querySelector('a')?.textContent?.trim()
     || rows[0]?.textContent?.trim()
     || '';
+  const videoSrc = videoSrcRaw
+    ? videoSrcRaw.trim().replace(/\s+/g, '%20').replace(/\.mov$/, '.mp4')
+    : '/carousalvideo.mp4';
+    console.log('Raw video src:', videoSrcRaw);
+    console.log('Processed video src:', videoSrc);
+  const normalizedVideoSrc = videoSrc.startsWith('/') || videoSrc.startsWith('http')
+    ? videoSrc
+    : `/${videoSrc}`;
+
+  console.log('Hero video src:', normalizedVideoSrc);
 
   const slides = rows.slice(1).reduce((acc, row) => {
     const [c0, c1] = [...row.children];
@@ -28,21 +38,34 @@ function decorateVideo(block) {
   article.className = 'hero';
   article.setAttribute('aria-label', 'Hero carousel');
   article.innerHTML = `
-    <video class="hero-video" src="${videoSrc}"
-      autoplay muted loop playsinline preload="metadata"
-      aria-label="Adokicks featured video" tabindex="-1"></video>
-    <div class="hero-content">
+    <video class="hero-video" src="${normalizedVideoSrc}"
+      autoplay muted loop playsinline preload="metadata" poster="/adokicks.png"
+      aria-label="Adokicks featured hero video" tabindex="-1"></video>
+    <div class="hero-overlay">
       <h1 class="hero-title">${slides[0]?.title || ''}</h1>
       <p class="hero-subtitle">${slides[0]?.subtitle || ''}</p>
-      <div class="hero-actions">
-        <button class="hero-pause-btn icon-btn" type="button" aria-label="Pause video">
-          <span class="pause-icon" aria-hidden="true">&#10074;&#10074;</span>
+      <div class="hero-controls" role="group" aria-label="Hero carousel controls">
+        <button class="icon-toggle-btn hero-pause-btn" type="button" aria-label="Pause hero video">
+          &#10074;&#10074;
         </button>
-        <a href="/categories" class="button primary">Shop Now</a>
-        <a href="/featured" class="button secondary">View Featured</a>
       </div>
     </div>`;
   block.appendChild(article);
+
+  const video = article.querySelector('.hero-video');
+  if (video) {
+    video.addEventListener('loadstart', () => console.log('Video load started'));
+    video.addEventListener('loadeddata', () => console.log('Video data loaded'));
+    video.addEventListener('error', (e) => {
+      console.error('Video error:', e);
+      // Fallback: hide video and show background image
+      video.style.display = 'none';
+      article.style.backgroundImage = 'url(/adokicks.png)';
+      article.style.backgroundSize = 'cover';
+      article.style.backgroundPosition = 'center';
+    });
+    video.addEventListener('canplay', () => console.log('Video can play'));
+  }
 
   if (slides.length <= 1) return;
 
@@ -50,28 +73,18 @@ function decorateVideo(block) {
   const subtitleEl = article.querySelector('.hero-subtitle');
   const pauseBtn   = article.querySelector('.hero-pause-btn');
   const pauseIcon  = article.querySelector('.pause-icon');
-  const video      = article.querySelector('.hero-video');
+  // const video      = article.querySelector('.hero-video'); // already declared above
   let current = 0;
   let paused  = false;
 
-  [titleEl, subtitleEl].forEach((el) => {
-    el.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
-  });
+  // [titleEl, subtitleEl].forEach((el) => {
+  //   el.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
+  // });
 
   function cycleSlide() {
     current = (current + 1) % slides.length;
-    [titleEl, subtitleEl].forEach((el) => {
-      el.style.opacity   = '0';
-      el.style.transform = 'translateY(8px)';
-    });
-    setTimeout(() => {
-      titleEl.textContent    = slides[current].title;
-      subtitleEl.textContent = slides[current].subtitle;
-      [titleEl, subtitleEl].forEach((el) => {
-        el.style.opacity   = '1';
-        el.style.transform = 'translateY(0)';
-      });
-    }, 220);
+    titleEl.textContent    = slides[current].title;
+    subtitleEl.textContent = slides[current].subtitle;
   }
 
   setInterval(() => { if (!paused) cycleSlide(); }, 4200);
@@ -80,11 +93,11 @@ function decorateVideo(block) {
     paused = !paused;
     if (paused) {
       video.pause();
-      pauseIcon.innerHTML = '&#9658;';
+      pauseBtn.innerHTML = '&#9658;';
       pauseBtn.setAttribute('aria-label', 'Play video');
     } else {
       video.play().catch(() => {});
-      pauseIcon.innerHTML = '&#10074;&#10074;';
+      pauseBtn.innerHTML = '&#10074;&#10074;';
       pauseBtn.setAttribute('aria-label', 'Pause video');
     }
   });
