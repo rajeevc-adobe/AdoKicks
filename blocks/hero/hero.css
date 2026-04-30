@@ -66,11 +66,14 @@
 
 @media (max-width: 680px) {
   .hero, .hero-overlay { min-height: calc(95svh - var(--header-offset) - 0.9rem); }
-  .hero-overlay { padding: 1.2rem; }
+  /* reduce top spacing on mobile */
+  .hero-overlay { padding: 0.8rem; }
 }
 
 @media (max-width: 480px) {
   .hero, .hero-overlay { min-height: calc(95svh - var(--header-offset) - 0.55rem); }
+  /* tighter padding for very small screens */
+  .hero-overlay { padding: 0.6rem; }
 }
 
 @media (min-width: 1920px) {
