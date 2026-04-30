@@ -1,4 +1,5 @@
 export default function decorate(block) {
+  if (block.classList.contains('composed'))  { decorateComposed(block);    return; }
   if (block.classList.contains('about-strip')) { decorateAboutStrip(block); return; }
   if (block.classList.contains('metrics'))     { decorateMetrics(block);    return; }
   if (block.classList.contains('values'))      { decorateValues(block);     return; }
@@ -12,6 +13,56 @@ function contentRows(block) {
     const key = [...row.children][0]?.textContent?.trim().toLowerCase();
     return key !== 'variation' && key !== 'source';
   });
+}
+
+function imageMarkup(cell, fallbackAlt = '') {
+  const img = cell?.querySelector('img');
+  if (!img) return '';
+  return `<img src="${img.src}" alt="${img.alt || fallbackAlt}" loading="lazy">`;
+}
+
+function imageSrcFromCell(cell) {
+  const img = cell?.querySelector('img');
+  if (img?.src) return img.src;
+
+  const link = cell?.querySelector('a');
+  if (link?.href) return link.href;
+
+  const raw = cell?.textContent?.trim() || '';
+  return raw || '';
+}
+
+function decorateComposed(block) {
+  const rows = contentRows(block);
+  const headingCells = rows[0] ? [...rows[0].children] : [];
+  const imageCells = rows[1] ? [...rows[1].children] : [];
+  const titleCells = rows[2] ? [...rows[2].children] : [];
+
+  const title = headingCells[0]?.textContent?.trim() || 'Composed Originality';
+  const description = headingCells[1]?.textContent?.trim() || '';
+
+  const panels = imageCells.slice(0, 3).map((cell, index) => {
+    const label = titleCells[index]?.textContent?.trim() || '';
+    const link = cell?.querySelector('a');
+    const href = link?.href || imageSrcFromCell(cell) || '#';
+    const imgSrc = imageSrcFromCell(cell);
+    if (!imgSrc) return '';
+
+    return `
+      <a class="about-image-panel" href="${href}" aria-label="${label || title}">
+        <img src="${imgSrc}" alt="${label || title}" loading="lazy">
+        ${label ? `<span>${label}</span>` : ''}
+      </a>`;
+  }).join('');
+
+  block.innerHTML = `
+    <article class="about-strip section-card composed-strip" aria-label="${title}">
+      <h2>${title}</h2>
+      ${description ? `<p>${description}</p>` : ''}
+      <div class="about-strip-grid">
+        ${panels}
+      </div>
+    </article>`;
 }
 
 function decorateDefault(block) {
@@ -40,8 +91,7 @@ function decorateCategories(block) {
     <div class="categories-grid">
       ${rows.map((row) => {
         const cells = [...row.children];
-        const picture = cells[0]?.querySelector('picture');
-        const img = cells[0]?.querySelector('img');
+        const imgMarkup = imageMarkup(cells[0], cells[1]?.textContent?.trim() || '');
         const link  = cells[1]?.querySelector('a');
         const title = link?.textContent?.trim() || cells[1]?.textContent?.trim() || '';
         const href  = link?.href || '#';
@@ -51,7 +101,7 @@ function decorateCategories(block) {
         return `
           <article class="category-card">
             <a href="${href}" class="category-card-img-link" aria-label="${title}">
-              ${picture?.outerHTML || (img ? `<picture>${img.outerHTML}</picture>` : '')}
+              ${imgMarkup}
               <span class="category-card-badge">${category}</span>
             </a>
             <div class="category-card-body">
@@ -74,13 +124,12 @@ function decorateAboutStrip(block) {
   block.innerHTML = `
     <div class="about-strip-grid">
       ${imgCells.map((cell, i) => {
-        const picture = cell.querySelector('picture');
-        const img     = cell.querySelector('img');
+        const imgMarkup = imageMarkup(cell, labelCells[i]?.textContent?.trim() || '');
         const label   = labelCells[i]?.textContent?.trim() || '';
-        if (!picture && !img) return '';
+        if (!imgMarkup) return '';
         return `
           <div class="about-image-panel">
-            ${picture?.outerHTML || `<img src="${img.src}" alt="${img.alt || label}" loading="lazy">`}
+            ${imgMarkup}
             ${label ? `<span>${label}</span>` : ''}
           </div>`;
       }).join('')}

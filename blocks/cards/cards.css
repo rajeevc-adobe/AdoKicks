@@ -26,6 +26,102 @@
 .about-image-panel picture img, .about-image-panel img { width: 100%; height: 100%; object-fit: cover; }
 .about-image-panel span { position: absolute; bottom: var(--spacing-sm); left: var(--spacing-sm); right: var(--spacing-sm); color: #fff; font-weight: 700; font-size: var(--font-size-sm); background: rgba(0,0,0,0.38); padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--radius-sm); }
 
+/* Composed variant */
+.cards.composed .composed-strip,
+.composed-strip {
+  background: #1f1f1f;
+  border-color: #dc2626;
+  border-width: 2px;
+  color: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.cards.composed .composed-strip h2,
+.composed-strip h2 {
+  background: linear-gradient(90deg, #ffffff 0%, #dc2626 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.8rem;
+}
+
+.cards.composed .composed-strip p,
+.composed-strip p { color: #e5e5e5; }
+
+.cards.composed .composed-strip .about-strip-grid,
+.composed-strip .about-strip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+  margin: 0.9rem 0;
+}
+
+.cards.composed .composed-strip .about-image-panel,
+.composed-strip .about-image-panel {
+  position: relative;
+  min-height: 230px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.cards.composed .composed-strip .about-image-panel picture img,
+.cards.composed .composed-strip .about-image-panel img,
+.composed-strip .about-image-panel picture img,
+.composed-strip .about-image-panel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.78) contrast(1.05);
+}
+
+.cards.composed .composed-strip .about-image-panel span,
+.composed-strip .about-image-panel span {
+  position: absolute;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: 0.05em;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.6);
+  background: transparent;
+  border-radius: 0;
+  padding: 0.8rem 1.2rem;
+  white-space: nowrap;
+  text-align: center;
+}
+
+@media (max-width: 1024px) {
+  .cards.composed .composed-strip .about-strip-grid,
+  .composed-strip .about-strip-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cards.composed .composed-strip .about-image-panel,
+  .composed-strip .about-image-panel {
+    min-height: 145px;
+  }
+
+  .cards.composed .composed-strip .about-image-panel span,
+  .composed-strip .about-image-panel span {
+    font-size: 0.88rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .cards.composed .composed-strip .about-strip-grid,
+  .composed-strip .about-strip-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Metrics */
 .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--spacing-md); }
 .metric-card { text-align: center; padding: var(--spacing-xl) var(--spacing-md); border: 2px solid var(--color-brand-light); border-radius: var(--radius-lg); background: var(--color-white); transition: box-shadow var(--transition-base); }
