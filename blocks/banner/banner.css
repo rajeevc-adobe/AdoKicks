@@ -1,44 +1,123 @@
 .banner-wrapper, .banner-container { padding: 0 var(--spacing-md); }
 .banner-container > div { max-width: var(--max-width); margin: 0 auto; }
 
-.banner-split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); }
-.banner-full .banner-card { aspect-ratio: 21 / 6; }
-
-.banner-card {
-  display: block;
-  position: relative;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  aspect-ratio: 4 / 3;
-  text-decoration: none;
+.banner-row {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.banner-card picture img,
-.banner-card img {
+.banner-split,
+.banner-full {
+  display: grid;
+  gap: 1rem;
+}
+
+.banner-card,
+.gender-banner {
+  min-height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  color: #fff;
+  border: 3px solid #dc2626;
+  display: block;
+  text-decoration: none;
+  background: transparent;
+}
+
+.banner-card::before,
+.gender-banner::before {
+  content: "";
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
+  z-index: 2;
+  background: linear-gradient(120deg, rgba(0,0,0,0.7), rgba(0,0,0,0.5));
 }
 
-.banner-card:hover picture img,
-.banner-card:hover img { transform: scale(1.04); }
-
-.banner-text {
+.banner-card img,
+.gender-banner img {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
-  display: flex; flex-direction: column; gap: var(--spacing-sm);
+  top: 0;
+  bottom: 0;
+  width: 56%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  z-index: 1;
 }
 
-.banner-text h2 { color: #fff; margin: 0; text-shadow: 0 2px 8px rgba(0,0,0,0.4); font-size: clamp(1.3rem, 2.5vw, 2rem); }
-.banner-text p  { color: rgba(255,255,255,0.85); font-size: var(--font-size-sm); margin: 0; }
-.banner-cta { align-self: flex-start; font-size: var(--font-size-sm); background: rgba(255,255,255,0.95); color: var(--color-text); }
+.banner-card .banner-text,
+.gender-banner .banner-text {
+  position: relative;
+  z-index: 3;
+  padding: 1.5rem;
+  min-height: 380px;
+  display: grid;
+  align-content: end;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.banner-split .banner-card:first-child .banner-text,
+.men-banner .banner-text {
+  padding-right: 48%;
+}
+
+.banner-split .banner-card:last-child .banner-text,
+.women-banner .banner-text {
+  padding-left: 48%;
+  text-align: right;
+}
+
+.banner-card h2,
+.banner-card p,
+.gender-banner h2,
+.gender-banner p {
+  margin: 0;
+}
+
+.men-banner img { right: 0; }
+.women-banner img { left: 0; }
+
+@media (max-width: 1024px) {
+  .banner-card,
+  .gender-banner { min-height: 380px; }
+
+  .banner-card .banner-text,
+  .gender-banner .banner-text { min-height: 330px; }
+}
 
 @media (max-width: 680px) {
-  .banner-split { grid-template-columns: 1fr; }
-  .banner-card  { aspect-ratio: 16 / 9; }
+  .banner-card,
+  .gender-banner { min-height: 290px; }
+
+  .banner-card img,
+  .gender-banner img { width: 74%; opacity: 0.95; }
+
+  .banner-card .banner-text,
+  .gender-banner .banner-text { min-height: 250px; }
+
+  .banner-split .banner-card:first-child .banner-text,
+  .banner-split .banner-card:last-child .banner-text,
+  .men-banner .banner-text,
+  .women-banner .banner-text {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .banner-card,
+  .gender-banner { min-height: 255px; }
+
+  .banner-card img,
+  .gender-banner img { width: 80%; }
+
+  .banner-card .banner-text,
+  .gender-banner .banner-text { min-height: 215px; }
+}
+
+@media (min-width: 1440px) {
+  .banner-card,
+  .gender-banner { min-height: 420px; }
 }
