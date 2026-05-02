@@ -79,12 +79,36 @@
 .men-banner img { right: 0; }
 .women-banner img { left: 0; }
 
+/* Full-width gender banner for mens/womens pages */
+.full-width-gender .gender-banner {
+  min-height: 520px;
+}
+
+.full-width-gender .gender-banner .banner-text {
+  padding: 1.5rem;
+  min-height: 470px;
+}
+
+.full-width-gender .gender-banner img {
+  width: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
 @media (max-width: 1024px) {
   .banner-card,
   .gender-banner { min-height: 380px; }
 
   .banner-card .banner-text,
   .gender-banner .banner-text { min-height: 330px; }
+
+  .full-width-gender .gender-banner {
+    min-height: 420px;
+  }
+
+  .full-width-gender .gender-banner .banner-text {
+    min-height: 370px;
+  }
 }
 
 @media (max-width: 680px) {
@@ -104,6 +128,19 @@
     padding-left: 1rem;
     padding-right: 1rem;
   }
+
+  .full-width-gender .gender-banner {
+    min-height: 340px;
+  }
+
+  .full-width-gender .gender-banner .banner-text {
+    min-height: 290px;
+    padding: 1rem;
+  }
+
+  .full-width-gender .gender-banner img {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -115,6 +152,19 @@
 
   .banner-card .banner-text,
   .gender-banner .banner-text { min-height: 215px; }
+
+  .full-width-gender .gender-banner {
+    min-height: 300px;
+  }
+
+  .full-width-gender .gender-banner .banner-text {
+    min-height: 260px;
+    padding: 1rem;
+  }
+
+  .full-width-gender .gender-banner img {
+    width: 100%;
+  }
 }
 
 @media (min-width: 1440px) {

@@ -10,6 +10,16 @@ export default function decorate(block) {
   }
 }
 
+function getPageContext() {
+  // Detect current page from body dataset or URL path
+  const page = document.body.dataset.page || '';
+  const path = window.location.pathname;
+  
+  if (page === 'mens' || path.includes('/mens')) return 'mens';
+  if (page === 'womens' || path.includes('/womens')) return 'womens';
+  return 'home';
+}
+
 function decorateGenderBanners(block, rows) {
   const bannerData = [];
   
@@ -42,8 +52,21 @@ function decorateGenderBanners(block, rows) {
     }
   }
   
-  // Render first 2 banners
-  const bannerHTML = bannerData.slice(0, 2).map((banner, idx) => {
+  const pageContext = getPageContext();
+  let displayBanners = bannerData.slice(0, 2);
+  
+  // Filter banners based on page context
+  if (pageContext === 'mens') {
+    displayBanners = [bannerData[0]]; // Show only men banner full-width
+    block.classList.add('full-width-gender');
+  } else if (pageContext === 'womens') {
+    displayBanners = [bannerData[1]]; // Show only women banner full-width
+    block.classList.add('full-width-gender');
+  }
+  // else: on home, show both side-by-side
+  
+  // Render banners
+  const bannerHTML = displayBanners.map((banner, idx) => {
     const bannerClass = idx === 0 ? 'men-banner' : 'women-banner';
     return `
       <a class="gender-banner ${bannerClass}" href="${banner.href}" aria-label="${banner.heading}">
