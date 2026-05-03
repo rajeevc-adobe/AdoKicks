@@ -53,17 +53,17 @@ function productCard(product, showDescription = false) {
   const wishActive = isWishlisted(product.id);
   return `
     <article class="product-card" role="listitem" aria-label="${product.title} product card">
-      <a href="product.html?id=${encodeURIComponent(product.id)}" aria-label="View ${product.title} details">
+      <a href="/product?id=${encodeURIComponent(product.id)}" aria-label="View ${product.title} details">
         <img src="${firstImage}" alt="${product.title} shoe image" loading="lazy">
       </a>
       <div class="product-content">
-        <h3><a href="product.html?id=${encodeURIComponent(product.id)}">${product.title}</a></h3>
+        <h3><a href="/product?id=${encodeURIComponent(product.id)}">${product.title}</a></h3>
         <p>${product.brand} | ${CATEGORY_LABELS[product.category] || product.category}</p>
         <p class="price-line"><strong>${formatCurrency(product.price)}</strong> <span class="old-price">${formatCurrency(product.originalPrice)}</span></p>
         ${showDescription ? `<p>${product.description}</p>` : ""}
         <div class="price-line card-actions-row">
           <button class="heart-btn ${wishActive?"active":""}" type="button" data-action="wishlist-toggle" data-product-id="${product.id}" aria-label="Toggle wishlist for ${product.title}" title="Wishlist">&#10084;</button>
-          <a href="product.html?id=${encodeURIComponent(product.id)}" class="btn-secondary" aria-label="Shop ${product.title}">Shop</a>
+          <a href="/product?id=${encodeURIComponent(product.id)}" class="btn-secondary" aria-label="Shop ${product.title}">Shop</a>
         </div>
       </div>
     </article>

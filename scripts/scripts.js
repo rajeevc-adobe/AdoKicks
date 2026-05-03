@@ -84,6 +84,15 @@ export function params() {
 }
 
 /**
+ * Format currency in INR format.
+ * @param {number} value
+ * @returns {string}
+ */
+export function formatCurrency(value) {
+  return `Rs ${Number(value).toLocaleString('en-IN')}`;
+}
+
+/**
  * SHA-256 hash (async). Used by auth block for password hashing.
  * Mirrors the original sha256() function in app.js exactly.
  * @param {string} input
