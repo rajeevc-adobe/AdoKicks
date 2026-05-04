@@ -1,5 +1,5 @@
 import { getProducts, CATEGORY_LABELS } from '../../scripts/product-store.js';
-import { formatCurrency, isWishlisted, toggleWishlist, toast, getWishlist, addToCart } from '../../scripts/cart-store.js';
+import { formatCurrency, isWishlisted, toggleWishlist, toast, getWishlist } from '../../scripts/cart-store.js';
 
 export default async function decorate(block) {
   // Read DA option rows (key | value)
@@ -249,27 +249,17 @@ async function renderWishlist(block, opts = {}) {
   document.body.dataset.page = 'wishlist';
 
   if (!wishlist.length) {
-    block.innerHTML = `
-      <div class="wishlist-empty">
-        <div class="wishlist-empty-icon">♡</div>
-        <h1>${sanitizeText(opts.emptyTitle || 'Your wishlist is empty')}</h1>
-        <p>${sanitizeText(opts.emptyText || 'Browse our collections and hit the heart on any shoe to save it here.')}</p>
-        <a href="/categories" class="button primary">Start Browsing</a>
-      </div>`;
+    block.innerHTML = '<p>Your wishlist is empty.</p>';
     return;
   }
 
   const products = await getProducts();
   const items = wishlist.map((id) => products.find((p) => p.id === id)).filter(Boolean);
   block.innerHTML = `
-    <section class="wishlist-page" aria-label="Wishlist">
-      <div class="wishlist-head">
-        <p class="eyebrow">${sanitizeText(opts.eyebrow || 'Saved picks')}</p>
-        <h1>${sanitizeText(opts.title || 'Your Wishlist')}</h1>
-        <p>${sanitizeText(opts.subtitle || 'Choose a size and move a saved pair straight into your bag.')}</p>
-      </div>
-      <div class="wishlist-grid" role="list" aria-label="Your wishlist">
-        ${items.map((p) => wishlistCard(p)).join('')}
+    <section aria-label="Saved wishlist products">
+      <h1>${sanitizeText(opts.title || 'Your Wishlist')}</h1>
+      <div id="wishlist-grid" class="product-grid" role="list" aria-label="Wishlist items">
+        ${items.map((p) => productCard(p)).join('')}
       </div>
     </section>`;
 
@@ -279,56 +269,16 @@ async function renderWishlist(block, opts = {}) {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
 
-      const removeBtn = target.closest('[data-action="wishlist-remove"]');
-      if (removeBtn instanceof HTMLElement) {
-        toggleWishlist(removeBtn.dataset.productId);
+      const wishBtn = target.closest('[data-action="wishlist-toggle"]');
+      if (wishBtn instanceof HTMLElement) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleWishlist(wishBtn.dataset.productId);
         toast('Removed from wishlist', 'success');
         await renderWishlist(block, opts);
-        return;
-      }
-
-      const addBtn = target.closest('[data-action="wishlist-add-cart"]');
-      if (addBtn instanceof HTMLElement) {
-        const card = addBtn.closest('.wishlist-card');
-        const size = card?.querySelector('[data-wishlist-size]')?.value || '';
-        const ok = addToCart(addBtn.dataset.productId, size, 1);
-        if (ok) {
-          toast('Moved to bag', 'success');
-          await renderWishlist(block, opts);
-        }
       }
     });
   }
-}
-
-function wishlistCard(product) {
-  const firstImage = (product.images && product.images[0]) || '/adokicks.png';
-  const sizes = product.sizes || [];
-  return `
-    <article class="wishlist-card" role="listitem" aria-label="${sanitizeText(product.title)} wishlist item">
-      <a class="wishlist-card-image" href="/product?id=${encodeURIComponent(product.id)}" aria-label="View ${sanitizeText(product.title)} details">
-        <img src="${sanitizeText(firstImage)}" alt="${sanitizeText(product.title)} shoe image" loading="lazy">
-      </a>
-      <div class="wishlist-card-body">
-        <div class="wishlist-card-copy">
-          <p class="wishlist-card-kicker">${sanitizeText(product.brand)} | ${sanitizeText(CATEGORY_LABELS[product.category] || product.category)}</p>
-          <h2><a href="/product?id=${encodeURIComponent(product.id)}">${sanitizeText(product.title)}</a></h2>
-          <p class="price-line"><strong>${formatCurrency(product.price)}</strong> <span class="old-price">${formatCurrency(product.originalPrice)}</span></p>
-        </div>
-        <label class="wishlist-size-label">
-          <span>Size</span>
-          <select data-wishlist-size aria-label="Select size for ${sanitizeText(product.title)}">
-            <option value="">Select size</option>
-            ${sizes.map((size) => `<option value="${sanitizeText(size)}">${sanitizeText(size)}</option>`).join('')}
-          </select>
-        </label>
-        <div class="wishlist-card-actions">
-          <button class="button primary" type="button" data-action="wishlist-add-cart" data-product-id="${sanitizeText(product.id)}">Add to Bag</button>
-          <button class="button secondary" type="button" data-action="wishlist-remove" data-product-id="${sanitizeText(product.id)}">Remove</button>
-        </div>
-      </div>
-    </article>
-  `;
 }
 
 function renderCategories(block, products, opts = {}) {
