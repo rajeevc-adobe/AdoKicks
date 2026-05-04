@@ -55,9 +55,6 @@ function getConfig(block) {
     benefit1: config.benefit1 || 'Faster checkout with saved profile details',
     benefit2: config.benefit2 || 'Track orders and delivery updates',
     benefit3: config.benefit3 || 'Save your favorite shoes in wishlist',
-    image: config.image || '/adokicks.png',
-    stat1: config.stat1 || 'Saved wishlist',
-    stat2: config.stat2 || 'Order tracking',
   };
 }
 
@@ -77,9 +74,6 @@ function renderAuthMarkup(block, config) {
   block.innerHTML = `
     <section class="auth-shell" aria-label="Login and registration">
       <aside class="auth-intro section-card" aria-label="Adokicks account benefits">
-        <div class="auth-brand-mark" aria-hidden="true">
-          <img src="${sanitize(config.image)}" alt="">
-        </div>
         <p class="eyebrow">${sanitize(config.eyebrow)}</p>
         <h1>${sanitize(config.title)}</h1>
         <p>${sanitize(config.intro)}</p>
@@ -88,10 +82,6 @@ function renderAuthMarkup(block, config) {
           <li>${sanitize(config.benefit2)}</li>
           <li>${sanitize(config.benefit3)}</li>
         </ul>
-        <div class="auth-member-tags" aria-label="Member account features">
-          <span>${sanitize(config.stat1)}</span>
-          <span>${sanitize(config.stat2)}</span>
-        </div>
       </aside>
 
       <section class="auth-section" aria-label="Authentication forms">

@@ -17,55 +17,11 @@ body[data-page="auth"] {
 }
 
 .auth .auth-intro {
-  position: relative;
-  overflow: hidden;
   border-radius: 18px;
   border: 1px solid #f4d4d4;
-  background:
-    radial-gradient(circle at 86% 14%, rgba(220, 38, 38, 0.16) 0%, rgba(220, 38, 38, 0) 34%),
-    linear-gradient(145deg, #ffffff 0%, #fff2f2 100%);
+  background: linear-gradient(145deg, #ffffff 0%, #fff2f2 100%);
   box-shadow: 0 20px 38px rgba(17, 24, 39, 0.08);
   height: 100%;
-  display: grid;
-  align-content: center;
-  gap: 0.15rem;
-}
-
-.auth .auth-intro::after {
-  content: "";
-  position: absolute;
-  right: -52px;
-  bottom: -58px;
-  width: 190px;
-  height: 190px;
-  border-radius: 50%;
-  border: 28px solid rgba(220, 38, 38, 0.08);
-}
-
-.auth .auth-brand-mark {
-  position: relative;
-  z-index: 1;
-  width: 72px;
-  height: 72px;
-  margin-bottom: 0.75rem;
-  border-radius: 50%;
-  border: 2px solid #dc2626;
-  background: #fff;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 14px 30px rgba(220, 38, 38, 0.14);
-}
-
-.auth .auth-brand-mark img {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-}
-
-.auth .auth-intro .eyebrow,
-.auth .auth-intro h1 {
-  position: relative;
-  z-index: 1;
 }
 
 .auth .auth-intro h1 {
@@ -75,40 +31,17 @@ body[data-page="auth"] {
 }
 
 .auth .auth-intro p {
-  position: relative;
-  z-index: 1;
   margin: 0.55rem 0 0;
   color: #4b5563;
   line-height: 1.5;
 }
 
 .auth .auth-points {
-  position: relative;
-  z-index: 1;
   margin: 0.9rem 0 0;
   padding-left: 1.1rem;
   display: grid;
   gap: 0.4rem;
   color: #374151;
-}
-
-.auth .auth-member-tags {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.auth .auth-member-tags span {
-  border: 1px solid #fecaca;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
-  color: #991b1b;
-  font-size: 0.78rem;
-  font-weight: 800;
-  padding: 0.45rem 0.7rem;
 }
 
 .auth .auth-section {

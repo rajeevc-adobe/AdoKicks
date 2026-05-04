@@ -1,8 +1,16 @@
-import { getCart, getWishlist, getCurrentUser, toast, formatCurrency } from '../../scripts/cart-store.js';
+import {
+  getCart,
+  getWishlist,
+  getCurrentUser,
+  logout,
+  toast,
+  formatCurrency,
+} from '../../scripts/cart-store.js';
 
 let cartOpen = false;
 let searchOpen = false;
 let mobileOpen = false;
+let profileOpen = false;
 
 const CATEGORY_LABELS = {
   training: 'Training Shoes',
@@ -132,6 +140,37 @@ function ensureCartDrawer() {
     `;
     document.body.appendChild(cart);
   }
+}
+
+function ensureProfileMenu() {
+  const user = getCurrentUser();
+  const existing = document.getElementById('profile-menu');
+  if (!user) {
+    existing?.remove();
+    return;
+  }
+  if (existing) return;
+  const menu = document.createElement('div');
+  menu.id = 'profile-menu';
+  menu.className = 'profile-menu hidden';
+  menu.innerHTML = `
+    <a href="/my-orders" aria-label="View my orders">My Orders</a>
+    <button id="logout-btn" type="button" aria-label="Logout">Logout</button>
+  `;
+  document.body.appendChild(menu);
+}
+
+function closeProfileMenu() {
+  profileOpen = false;
+  document.getElementById('profile-menu')?.classList.add('hidden');
+}
+
+function toggleProfileMenu() {
+  const menu = document.getElementById('profile-menu');
+  if (!menu) return;
+  closeMobile();
+  profileOpen = !profileOpen;
+  menu.classList.toggle('hidden', !profileOpen);
 }
 
 function toggleCartDrawer(state) {
@@ -324,6 +363,7 @@ export default async function decorate(block) {
 
   ensureSearchPopup();
   ensureCartDrawer();
+  ensureProfileMenu();
 
   // Load products
   const products = await import('../../scripts/product-store.js').then((m) => m.getProducts());
@@ -343,6 +383,14 @@ export default async function decorate(block) {
   document.getElementById('open-search-mobile')?.addEventListener('click', toggleSearchPopup);
   document.getElementById('open-cart')?.addEventListener('click', () => toggleCartDrawer(productState));
   document.getElementById('open-cart-mobile')?.addEventListener('click', () => toggleCartDrawer(productState));
+  document.getElementById('profile-btn')?.addEventListener('click', toggleProfileMenu);
+  document.getElementById('profile-btn-mobile')?.addEventListener('click', toggleProfileMenu);
+  document.getElementById('logout-btn')?.addEventListener('click', () => {
+    logout();
+    closeProfileMenu();
+    toast('You have been logged out', 'success');
+    window.location.href = '/';
+  });
   document.getElementById('close-cart')?.addEventListener('click', () => {
     cartOpen = false;
     document.getElementById('cart-drawer')?.classList.add('hidden');
@@ -354,6 +402,17 @@ export default async function decorate(block) {
   document.getElementById('mobile-menu-backdrop')?.addEventListener('click', closeMobile);
   window.addEventListener('resize', () => {
     if (window.innerWidth > 1024) closeMobile();
+  });
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const profileMenu = document.getElementById('profile-menu');
+    const profileBtn = document.getElementById('profile-btn');
+    const profileBtnMobile = document.getElementById('profile-btn-mobile');
+    const profileTrigger = profileBtn?.contains(target) || profileBtnMobile?.contains(target);
+    if (profileOpen && profileMenu && !profileMenu.contains(target) && !profileTrigger) {
+      closeProfileMenu();
+    }
   });
 
   // Badge updates
