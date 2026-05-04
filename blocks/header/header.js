@@ -229,6 +229,14 @@ function toggleMobile() {
   document.getElementById('mobile-menu-btn')?.setAttribute('aria-expanded', mobileOpen ? 'true' : 'false');
 }
 
+function getCurrentPath() {
+  const path = window.location.pathname
+    .replace(/\/index(?:\.html)?$/i, '/')
+    .replace(/\.html$/i, '')
+    .replace(/\/$/, '');
+  return path || '/';
+}
+
 export default async function decorate(block) {
   const navItems = [
     { href: '/', label: 'Home', aria: 'Home page' },
@@ -240,33 +248,32 @@ export default async function decorate(block) {
   ];
 
   const user = getCurrentUser();
-  const page = document.body.dataset.page || 'home';
-  const pageMap = {
-    home: '/',
-    mens: '/mens',
-    womens: '/womens',
-    featured: '/featured',
-    categories: '/categories',
-    about: '/about',
-  };
-  const currentPath = pageMap[page] || '/';
+  const currentPath = getCurrentPath();
   const navLinkClass = (href) => (href === currentPath ? 'nav-link active' : 'nav-link');
+  const mobileLinkClass = (href) => (href === currentPath ? 'mobile-menu-link active' : 'mobile-menu-link');
   const navLinks = navItems
     .map((i) => `<a class="${navLinkClass(i.href)}" href="${i.href}" aria-label="${i.aria}">${i.label}</a>`)
     .join('');
   const mobileLinks = navItems
-    .map((i) => `<a class="mobile-menu-link" href="${i.href}" aria-label="${i.aria}">${i.label}</a>`)
+    .map((i) => `<a class="${mobileLinkClass(i.href)}" href="${i.href}" aria-label="${i.aria}">${i.label}</a>`)
     .join('');
 
   block.innerHTML = `
     <div class="site-header">
       <nav class="nav-inner" role="navigation" aria-label="Main navigation">
-        <div class="nav-mobile-left" aria-hidden="true">
-          <button id="mobile-menu-btn" class="icon-btn nav-icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
-            <span class="menu-toggle-lines" aria-hidden="true"><span></span><span></span><span></span></span>
-          </button>
+        <div class="nav-mobile-actions">
           <button id="open-search-mobile" class="icon-btn nav-icon-btn nav-mobile-icon" type="button" aria-label="Open product search" title="Search">
             <img src="/assests/icons/search-button-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg">
+          </button>
+          <button id="open-cart-mobile" class="icon-btn nav-icon-btn nav-mobile-icon" type="button" aria-label="Open cart sidebar" title="Cart">
+            <img src="/assests/icons/cart-shopping-fast-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg">
+            <span id="cart-count-mobile" class="icon-count">0</span>
+          </button>
+          ${user
+            ? '<button id="profile-btn-mobile" class="icon-btn nav-icon-btn nav-mobile-icon nav-auth-icon" type="button" aria-label="Profile menu" title="Profile"><img src="/assests/icons/person-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg"></button>'
+            : '<a href="/auth" class="icon-btn nav-icon-btn nav-mobile-icon nav-auth-icon" aria-label="Sign in" title="Sign in"><img src="/assests/icons/person-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg"></a>'}
+          <button id="mobile-menu-btn" class="icon-btn nav-icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+            <span class="menu-toggle-lines" aria-hidden="true"><span></span><span></span><span></span></span>
           </button>
         </div>
 
@@ -300,15 +307,6 @@ export default async function decorate(block) {
           </div>
         </div>
 
-        <div class="nav-mobile-right" aria-hidden="true">
-          ${user
-            ? '<button id="profile-btn-mobile" class="icon-btn nav-icon-btn nav-mobile-icon nav-auth-icon" type="button" aria-label="Profile menu" title="Profile"><img src="/assests/icons/person-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg"></button>'
-            : '<a href="/auth" class="icon-btn nav-icon-btn nav-mobile-icon nav-auth-icon" aria-label="Sign in" title="Sign in"><img src="/assests/icons/person-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg"></a>'}
-          <button id="open-cart-mobile" class="icon-btn nav-icon-btn nav-mobile-icon" type="button" aria-label="Open cart sidebar" title="Cart">
-            <img src="/assests/icons/cart-shopping-fast-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg">
-            <span id="cart-count-mobile" class="icon-count">0</span>
-          </button>
-        </div>
       </nav>
       <div id="mobile-menu-backdrop" class="mobile-menu-backdrop hidden" aria-hidden="true"></div>
       <aside id="mobile-menu" class="mobile-menu hidden" aria-label="Mobile navigation">
