@@ -1,24 +1,59 @@
 export default function decorate(block) {
-  if (block.classList.contains('composed'))  { decorateComposed(block);    return; }
-  if (block.classList.contains('about-strip')) { decorateAboutStrip(block); return; }
-  if (block.classList.contains('metrics'))     { decorateMetrics(block);    return; }
-  if (block.classList.contains('values'))      { decorateValues(block);     return; }
-  if (block.classList.contains('timeline'))    { decorateTimeline(block);   return; }
-  if (block.classList.contains('categories'))  { decorateCategories(block); return; }
+  const opts = readOpts(block);
+  const variation = getCardsVariation(block, opts);
+  if (variation) block.classList.add(variation);
+  if (variation === 'about-hero') { decorateAboutHero(block, opts); return; }
+  if (variation === 'composed')  { decorateComposed(block);    return; }
+  if (variation === 'about-strip') { decorateAboutStrip(block); return; }
+  if (variation === 'metrics')     { decorateMetrics(block);    return; }
+  if (variation === 'values')      { decorateValues(block, opts);     return; }
+  if (variation === 'timeline')    { decorateTimeline(block);   return; }
+  if (variation === 'categories')  { decorateCategories(block); return; }
   decorateDefault(block);
+}
+
+function readOpts(block) {
+  const opts = {};
+  [...block.querySelectorAll(':scope > div')].forEach((row) => {
+    const cells = [...row.children];
+    if (cells.length >= 2) {
+      opts[cells[0].textContent.trim().toLowerCase()] = cells[1].textContent.trim();
+    }
+  });
+  return opts;
+}
+
+function getCardsVariation(block, opts) {
+  const knownVariations = ['about-hero', 'about-strip', 'categories', 'composed', 'metrics', 'timeline', 'values'];
+  const authored = (opts.variation || '').toLowerCase();
+  if (knownVariations.includes(authored)) return authored;
+
+  const classVariation = knownVariations.find((name) => block.classList.contains(name));
+  if (classVariation) return classVariation;
+
+  const variationTexts = [
+    ...[...block.classList],
+    ...[...block.querySelectorAll(':scope > h1, :scope > h2, :scope > h3, :scope > div > div')]
+      .map((element) => element.textContent?.trim() || ''),
+  ];
+  return variationTexts
+    .map((text) => text.match(/^cards\(([^)]+)\)$/i)?.[1]?.toLowerCase())
+    .find((variation) => knownVariations.includes(variation)) || null;
 }
 
 function contentRows(block) {
   return [...block.children].filter((row) => {
     const key = [...row.children][0]?.textContent?.trim().toLowerCase();
-    return key !== 'variation' && key !== 'source';
+    return key !== 'variation' && key !== 'source' && !key?.startsWith('cards(');
   });
 }
 
 function imageMarkup(cell, fallbackAlt = '') {
   const img = cell?.querySelector('img');
-  if (!img) return '';
-  return `<img src="${img.src}" alt="${img.alt || fallbackAlt}" loading="lazy">`;
+  if (img) return `<img src="${img.src}" alt="${img.alt || fallbackAlt}" loading="lazy">`;
+  const src = imageSrcFromCell(cell);
+  if (!src) return '';
+  return `<img src="${src}" alt="${imageAltFromCell(cell, fallbackAlt)}" loading="lazy">`;
 }
 
 function imageSrcFromCell(cell) {
@@ -26,10 +61,22 @@ function imageSrcFromCell(cell) {
   if (img?.src) return img.src;
 
   const link = cell?.querySelector('a');
-  if (link?.href) return link.href;
+  if (link?.href) return link.getAttribute('href') || link.href;
 
   const raw = cell?.textContent?.trim() || '';
-  return raw || '';
+  if (/^https?:\/\//i.test(raw) || raw.startsWith('/')) return raw;
+  return '';
+}
+
+function imageAltFromCell(cell, fallbackAlt = '') {
+  const img = cell?.querySelector('img');
+  if (img?.alt) return img.alt;
+
+  const link = cell?.querySelector('a');
+  const linkText = link?.textContent?.trim();
+  if (linkText && linkText !== link?.href) return linkText;
+
+  return fallbackAlt;
 }
 
 function decorateComposed(block) {
@@ -139,57 +186,104 @@ function decorateAboutStrip(block) {
 function decorateMetrics(block) {
   const rows = contentRows(block);
   block.innerHTML = `
-    <div class="metrics-grid">
+    <section class="about-metric-grid" aria-label="Adokicks brand metrics">
       ${rows.map((row) => {
         const cells = [...row.children];
         return `
           <article class="metric-card">
-            <h2>${cells[0]?.textContent?.trim() || ''}</h2>
             <p class="metric-label">${cells[1]?.textContent?.trim() || ''}</p>
+            <h2>${cells[0]?.textContent?.trim() || ''}</h2>
           </article>`;
       }).join('')}
-    </div>`;
+    </section>`;
 }
 
-function decorateValues(block) {
+function decorateValues(block, opts = {}) {
   const rows = contentRows(block);
   const titles = rows[0] ? [...rows[0].children] : [];
   const descs  = rows[1] ? [...rows[1].children] : [];
+  const kicker = opts.kicker || 'What we stand for';
+  const title = opts.title || 'Three principles behind every release';
   block.innerHTML = `
-    <div class="values-grid">
-      ${titles.map((cell, i) => `
-        <article class="value-card">
-          <h3>${cell.textContent.trim()}</h3>
-          <p>${descs[i]?.textContent?.trim() || ''}</p>
-        </article>`).join('')}
-    </div>`;
+    <section class="about-values-wrap section-card" aria-label="Adokicks values">
+      <p class="about-kicker">${kicker}</p>
+      <h2>${title}</h2>
+      <div class="about-values-grid">
+        ${titles.map((cell, i) => `
+          <article class="value-card">
+            <h3>${cell.textContent.trim()}</h3>
+            <p>${descs[i]?.textContent?.trim() || ''}</p>
+          </article>`).join('')}
+      </div>
+    </section>`;
 }
 
 function decorateTimeline(block) {
   const all = contentRows(block);
   const milestones = [];
-  for (let i = 0; i < all.length; i += 2) {
+  for (let i = 0; i < all.length; i += 1) {
     const cellsA = [...(all[i]?.children || [])];
-    const cellsB = [...(all[i + 1]?.children || [])];
+    const year = cellsA[0]?.textContent?.trim() || '';
+    const title = cellsA[1]?.textContent?.trim() || '';
+    const imageCell = cellsA[2];
+    if (!year || !title) continue;
+
+    const nextCells = [...(all[i + 1]?.children || [])];
+    const desc = nextCells[0]?.textContent?.trim() || '';
+    if (desc && !nextCells[1]?.textContent?.trim()) i += 1;
+
     milestones.push({
-      year:  cellsA[0]?.textContent?.trim() || '',
-      title: cellsA[1]?.textContent?.trim() || '',
-      img:   cellsA[2]?.querySelector('img') || null,
-      desc:  cellsB[0]?.textContent?.trim() || '',
+      year,
+      title,
+      imgSrc: imageSrcFromCell(imageCell),
+      imgAlt: imageAltFromCell(imageCell, title),
+      desc,
     });
   }
   block.innerHTML = `
-    <div class="timeline-list">
-      ${milestones.map(({ year, title, img, desc }, i) => `
-        <article class="timeline-step" aria-label="Milestone ${i + 1}">
-          <div class="timeline-year">${year}</div>
-          <div class="timeline-content">
-            ${img ? `<div class="timeline-media"><img src="${img.src}" alt="${title}" loading="lazy" width="96" height="96"></div>` : ''}
-            <div class="timeline-copy">
+    <section class="growth-track section-card" aria-label="Five growth milestones">
+      <div class="growth-head">
+        <p class="about-kicker">Journey</p>
+        <h2>Growth Milestones</h2>
+      </div>
+      <div class="growth-list">
+      ${milestones.map(({
+    year, title, imgSrc, imgAlt, desc,
+  }, i) => `
+        <article class="growth-step" aria-label="Milestone ${i + 1}">
+          <div class="growth-year">${year}</div>
+          <div class="growth-content">
+            ${imgSrc ? `<div class="growth-media"><img src="${imgSrc}" alt="${imgAlt}" loading="lazy"></div>` : ''}
+            <div class="growth-copy">
               <h3>${title}</h3>
               <p>${desc}</p>
             </div>
           </div>
         </article>`).join('')}
-    </div>`;
+      </div>
+    </section>`;
+}
+
+function decorateAboutHero(block, opts) {
+  const kicker = opts.kicker || 'Built for motion';
+  const title = opts.title || 'Our Story';
+  const description = opts.description || 'Adokicks builds performance and street-ready footwear designed for movement, comfort, and originality. We obsess over fit, durability, and everyday confidence in every pair we release.';
+  const badgeTitle = opts['badge title'] || 'Performance x Street';
+  const badgeText = opts['badge text'] || 'Engineered comfort for every stride.';
+  document.body.dataset.page = 'about';
+
+  block.innerHTML = `
+    <section class="about-hero section-card" aria-label="About company">
+      <p class="about-kicker">${kicker}</p>
+      <div class="about-hero-grid">
+        <div>
+          <h1>${title}</h1>
+          <p>${description}</p>
+        </div>
+        <div class="about-hero-badge" aria-label="Brand statement">
+          <strong>${badgeTitle}</strong>
+          <span>${badgeText}</span>
+        </div>
+      </div>
+    </section>`;
 }

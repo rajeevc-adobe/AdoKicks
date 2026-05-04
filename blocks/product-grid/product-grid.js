@@ -65,6 +65,7 @@ function getBlockVariationClass(block) {
 function getPageVariation() {
   const path = window.location.pathname.toLowerCase();
   if (path === '/categories' || path === '/categories.html' || path.endsWith('/categories')) return 'categories';
+  if (path === '/featured' || path === '/featured.html' || path.endsWith('/featured')) return 'featured';
   return null;
 }
 
@@ -151,11 +152,33 @@ function renderTrending(block, products, opts) {
 
 function renderFeatured(block, products, opts) {
   const limit = Number(opts.limit) || 12;
-  const sorted = [...products].sort((a, b) => b.price - a.price).slice(0, limit);
+  const title = opts.title || 'Featured Premium Picks';
+  const subtitle = opts.subtitle || 'Discover our curated collection of the finest athletic footwear';
+  const featuredIds = (opts.ids || 'm-tr-001,m-ca-001')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+  const topByPrice = [...products].sort((a, b) => b.price - a.price).slice(0, Math.max(limit, 10));
+  const specificFeatured = products.filter((product) => featuredIds.includes(product.id));
+  const sorted = [...topByPrice, ...specificFeatured]
+    .filter((product, index, items) => items.findIndex((item) => item.id === product.id) === index)
+    .slice(0, limit);
+
+  block.classList.add('featured');
+  document.body.dataset.page = 'featured';
+
   block.innerHTML = `
-    <div class="product-grid product-grid--featured" role="list" aria-label="Featured products">
-      ${sorted.map((p) => productCard(p, true)).join('')}
-    </div>`;
+    <section class="featured-section" aria-label="Top featured shoes">
+      <div class="featured-container">
+        <div class="featured-hero">
+          <h1 class="featured-title">${sanitizeText(title)}</h1>
+          <p class="featured-subtitle">${sanitizeText(subtitle)}</p>
+        </div>
+        <div class="featured-grid product-grid--featured" role="list" aria-label="Featured shoes">
+          ${sorted.map((p) => productCard(p, true)).join('')}
+        </div>
+      </div>
+    </section>`;
 }
 
 function renderSearch(block, products) {

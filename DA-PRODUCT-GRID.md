@@ -74,6 +74,26 @@ Use this structure for the categories page:
 | og:image | /media/banner/categories.png |
 ```
 
+## Featured Page Authoring
+
+```md
+| product-grid(featured) | |
+|---|---|
+| variation | featured |
+| title | Featured Premium Picks |
+| subtitle | Discover our curated collection of the finest athletic footwear |
+| limit | 12 |
+| ids | m-tr-001,m-ca-001 |
+
+---
+
+| Metadata | |
+|---|---|
+| title | Adokicks | Featured |
+| description | Featured premium shoe picks from Adokicks. |
+| og:image | /media/banner/featured.png |
+```
+
 ## Catalog Filters
 
 The block supports these filter fields in the authored table:
@@ -82,6 +102,7 @@ The block supports these filter fields in the authored table:
 - `title` - page heading shown above the grid
 - `gender` - `mens`, `womens`, or omitted for a shared catalog
 - `limit` - optional item limit for featured grids
+- `ids` - optional comma-separated product IDs to force into featured grids
 - `eyebrow` - optional categories hero eyebrow
 - `subtitle` - optional categories hero subtitle
 
