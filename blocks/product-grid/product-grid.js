@@ -4,19 +4,19 @@ import { formatCurrency, isWishlisted, toggleWishlist, toast, getWishlist } from
 export default async function decorate(block) {
   // Read DA option rows (key | value)
   const opts = readOpts(block);
+  const variationClass = getBlockVariationClass(block);
+  const blockGender = getBlockGender(block);
+  const inferredGender = (opts.gender || blockGender || '').toLowerCase() || null;
   const variation = opts.variation
-    || (block.classList.contains('catalog')   ? 'catalog'
-    :  block.classList.contains('featured')   ? 'featured'
-    :  block.classList.contains('search')     ? 'search'
-    :  block.classList.contains('wishlist')   ? 'wishlist'
-    : 'trending');
+    || variationClass
+    || (blockGender ? 'catalog' : 'trending');
 
   block.innerHTML = `<div class="pg-loading" aria-busy="true"><span class="pg-spinner"></span></div>`;
 
   try {
     if (variation === 'wishlist') { await renderWishlist(block); return; }
     const products = await getProducts();
-    if      (variation === 'catalog')  renderCatalog(block, products, opts);
+    if      (variation === 'catalog')  renderCatalog(block, products, { ...opts, gender: inferredGender });
     else if (variation === 'featured') renderFeatured(block, products, opts);
     else if (variation === 'search')   renderSearch(block, products);
     else                               renderTrending(block, products, opts);
@@ -37,6 +37,36 @@ export default async function decorate(block) {
   });
 }
 
+function getBlockVariationClass(block) {
+  const headingText = block.querySelector(':scope > h1, :scope > h2, :scope > h3')?.textContent?.trim() || '';
+  const headingMatch = headingText.match(/^product-grid\(([^)]+)\)$/i);
+  if (headingMatch) {
+    const variation = headingMatch[1].toLowerCase();
+    if (['catalog', 'featured', 'search', 'wishlist', 'trending'].includes(variation)) return variation;
+    if (['men', 'mens', 'women', 'womens'].includes(variation)) return 'catalog';
+  }
+
+  if (block.classList.contains('catalog')) return 'catalog';
+  if (block.classList.contains('featured')) return 'featured';
+  if (block.classList.contains('search')) return 'search';
+  if (block.classList.contains('wishlist')) return 'wishlist';
+  return null;
+}
+
+function getBlockGender(block) {
+  const headingText = block.querySelector(':scope > h1, :scope > h2, :scope > h3')?.textContent?.trim() || '';
+  const headingMatch = headingText.match(/^product-grid\(([^)]+)\)$/i);
+  if (headingMatch) {
+    const variation = headingMatch[1].toLowerCase();
+    if (variation === 'men' || variation === 'mens') return 'mens';
+    if (variation === 'women' || variation === 'womens') return 'womens';
+  }
+
+  if (block.classList.contains('men') || block.classList.contains('mens')) return 'mens';
+  if (block.classList.contains('women') || block.classList.contains('womens')) return 'womens';
+  return null;
+}
+
 function readOpts(block) {
   const opts = {};
   [...block.querySelectorAll(':scope > div')].forEach((row) => {
@@ -46,6 +76,15 @@ function readOpts(block) {
     }
   });
   return opts;
+}
+
+function sanitizeText(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function productCard(product, showDescription = false) {
@@ -165,130 +204,576 @@ async function renderWishlist(block) {
 }
 
 function renderCatalog(block, products, opts) {
-  const genderPre    = opts.gender || null;
-  const pool         = genderPre ? products.filter((p) => p.gender === genderPre) : products;
-  const hasGender    = !genderPre;
-  const meta         = buildFiltersMeta(pool);
-  const state        = readStateFromURL(meta, hasGender, genderPre);
+  const genderPre = (opts.gender || (block.classList.contains('mens') ? 'mens' : block.classList.contains('womens') ? 'womens' : null) || '').toLowerCase() || null;
+  const pool = genderPre ? products.filter((p) => p.gender === genderPre) : products;
+  const includeGender = !genderPre;
 
+  // Create layout structure for renderCatalogPage
   block.innerHTML = `
     <div class="catalog-layout">
-      <aside class="filter-panel section-card" aria-label="Filter products">
-        <div class="filter-panel-head">
-          <h3>Filters</h3>
-          <button id="clear-filters" class="clear-filters-btn" type="button">Clear all</button>
-        </div>
-        ${buildSidebarHTML(meta, state, hasGender)}
-      </aside>
-      <div class="catalog-main">
-        <div class="catalog-toolbar">
-          <p class="catalog-count" aria-live="polite"></p>
-          <select class="sort-select" aria-label="Sort products">
-            <option value="default" ${state.sort === 'default'   ? 'selected' : ''}>Best Match</option>
-            <option value="low-high" ${state.sort === 'low-high' ? 'selected' : ''}>Price: Low → High</option>
-            <option value="high-low" ${state.sort === 'high-low' ? 'selected' : ''}>Price: High → Low</option>
-          </select>
-        </div>
-        <div class="product-grid catalog-grid" role="list" aria-label="Products"></div>
-      </div>
-    </div>`;
+      <aside id="filter-panel" class="filter-panel" aria-label="Filter products"></aside>
+      <section id="product-grid-section" aria-label="Products">
+        <h1>${sanitizeText(opts.title || 'Products')}</h1>
+        <div id="product-grid" class="product-grid" role="list" aria-label="Products results"></div>
+      </section>
+    </div>
+  `;
 
-  applyAndRender();
-
-  block.querySelectorAll('.filter-cb').forEach((cb) => {
-    cb.addEventListener('change', () => {
-      const g = cb.dataset.group;
-      if (cb.checked) state[g].add(cb.value); else state[g].delete(cb.value);
-      applyAndRender(); syncURL();
-    });
-  });
-
-  block.querySelector('#price-max-input')?.addEventListener('input', (e) => {
-    state.maxPrice = Number(e.target.value);
-    const disp = block.querySelector('#price-display');
-    if (disp) disp.textContent = `Up to ${formatCurrency(state.maxPrice)}`;
-    applyAndRender(); syncURL();
-  });
-
-  block.querySelector('.sort-select')?.addEventListener('change', (e) => {
-    state.sort = e.target.value; applyAndRender(); syncURL();
-  });
-
-  block.querySelector('#clear-filters')?.addEventListener('click', () => {
-    block.querySelectorAll('.filter-cb').forEach((cb) => { cb.checked = false; });
-    state.categories = new Set(); state.brands = new Set();
-    state.maxPrice = meta.maxPrice; state.sort = 'default';
-    block.querySelector('#price-max-input').value = meta.maxPrice;
-    block.querySelector('.sort-select').value = 'default';
-    block.querySelector('#price-display').textContent = `Up to ${formatCurrency(meta.maxPrice)}`;
-    applyAndRender(); syncURL();
-  });
-
-  function applyAndRender() {
-    const filtered = filterProducts(pool, state);
-    const grid = block.querySelector('.catalog-grid');
-    const countEl = block.querySelector('.catalog-count');
-    if (countEl) countEl.textContent = `${filtered.length} product${filtered.length !== 1 ? 's' : ''}`;
-    if (grid) {
-      grid.innerHTML = filtered.length
-        ? filtered.map((p) => productCard(p)).join('')
-        : `<p class="no-results">No products match your filters.
-             <button class="link-btn" id="reset-btn-inline">Reset filters</button></p>`;
-      grid.querySelector('#reset-btn-inline')?.addEventListener('click', () => {
-        block.querySelector('#clear-filters')?.click();
-      });
-    }
-  }
-
-  function syncURL() {
-    const url = new URL(window.location);
-    state.categories.size ? url.searchParams.set('category', [...state.categories].join(',')) : url.searchParams.delete('category');
-    state.brands.size ? url.searchParams.set('brand', [...state.brands].join(',')) : url.searchParams.delete('brand');
-    state.sort !== 'default' ? url.searchParams.set('sort', state.sort) : url.searchParams.delete('sort');
-    window.history.replaceState({}, '', url);
-  }
+  // Render the full catalog page with advanced filters
+  renderCatalogPage(pool, includeGender, genderPre);
 }
 
-function readStateFromURL(meta, hasGender, genderPre) {
-  const q = new URLSearchParams(window.location.search);
+// ===== Advanced Filter Functions from Reference =====
+
+function buildCatalogFilters(products, includeGender) {
+  const categories = [...new Set(products.map((p) => p.category).filter(Boolean))].sort();
+  const sizes = [...new Set(products.flatMap((p) => p.sizes || []).map((s) => String(s)).filter(Boolean))]
+    .sort((a, b) => Number(a) - Number(b));
+  const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))].sort();
+  const pricesArray = products.map((p) => Number(p.price) || 0);
+  const maxPrice = Math.max(...pricesArray, 0);
+
   return {
-    categories: new Set((q.get('category') || '').split(',').filter((v) => meta.categories.includes(v))),
-    brands:     new Set((q.get('brand') || '').split(',').filter((v) => meta.brands.includes(v))),
-    gender:     hasGender && ['mens', 'womens'].includes(q.get('gender')) ? q.get('gender') : (genderPre || 'all'),
-    minPrice:   0,
-    maxPrice:   meta.maxPrice,
-    sort:       ['low-high', 'high-low'].includes(q.get('sort')) ? q.get('sort') : 'default',
+    categories,
+    sizes,
+    brands,
+    maxPrice,
+    includeGender,
   };
 }
 
-function buildSidebarHTML(meta, state, hasGender) {
-  const cbGroup = (title, group, items, labelFn = (v) => v) => `
-    <div class="filter-group">
-      <h4 class="filter-group-title">${title}</h4>
-      ${items.map((v) => `
-        <label class="filter-label">
-          <input type="checkbox" class="filter-cb" data-group="${group}" value="${v}"
-            ${state[group].has(String(v)) ? 'checked' : ''}>
-          <span>${labelFn(v)}</span>
-        </label>`).join('')}
-    </div>`;
+function getCatalogDefaults(filtersMeta, includeGender, forcedGender) {
+  const query = new URLSearchParams(window.location.search);
+  const categories = new Set();
+  const sizes = new Set();
+  const brands = new Set();
 
+  (query.get('category') || query.get('categories') || '')
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .forEach((v) => {
+      if (filtersMeta.categories.includes(v)) categories.add(v);
+    });
+
+  (query.get('size') || query.get('sizes') || '')
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .forEach((v) => {
+      if (filtersMeta.sizes.includes(v)) sizes.add(v);
+    });
+
+  (query.get('brand') || query.get('brands') || '')
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .forEach((v) => {
+      if (filtersMeta.brands.includes(v)) brands.add(v);
+    });
+
+  const reqMin = query.get('minPrice');
+  const reqMax = query.get('maxPrice');
+  const minPriceValue = reqMin ? Number(reqMin) : NaN;
+  const maxPriceValue = reqMax ? Number(reqMax) : NaN;
+  const minPrice = Number.isFinite(minPriceValue) ? Math.max(0, Math.min(minPriceValue, filtersMeta.maxPrice)) : 0;
+  const maxPriceRaw = Number.isFinite(maxPriceValue) ? Math.max(minPrice, Math.min(maxPriceValue, filtersMeta.maxPrice)) : filtersMeta.maxPrice;
+  const sortParam = (query.get('sort') || '').toLowerCase();
+  const sort = ['low-high', 'high-low'].includes(sortParam) ? sortParam : 'default';
+  const queryGender = (query.get('gender') || '').toLowerCase();
+  const gender = forcedGender || (includeGender && ['mens', 'womens'].includes(queryGender) ? queryGender : 'all');
+
+  return {
+    minPrice,
+    maxPrice: maxPriceRaw,
+    categories,
+    sizes,
+    brands,
+    gender,
+    sort,
+  };
+}
+
+function buildTitleRow(gridSection) {
+  const heading = gridSection.querySelector('h1');
+  if (!heading || gridSection.querySelector('.catalog-title-row')) return;
+
+  const row = document.createElement('div');
+  row.className = 'catalog-title-row';
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.id = 'catalog-filter-toggle';
+  toggleBtn.type = 'button';
+  toggleBtn.className = 'catalog-filter-toggle';
+  toggleBtn.setAttribute('aria-label', 'Toggle filters');
+  toggleBtn.setAttribute('aria-controls', 'filter-panel');
+  toggleBtn.setAttribute('aria-expanded', 'false');
+  toggleBtn.innerHTML = '<img src="assests/icons/filter-svgrepo-com.svg" alt="" aria-hidden="true">';
+
+  const titleControls = document.createElement('div');
+  titleControls.className = 'catalog-title-controls';
+
+  const sortWrap = document.createElement('div');
+  sortWrap.className = 'catalog-sort-wrap';
+
+  const sortBtn = document.createElement('button');
+  sortBtn.id = 'catalog-sort-toggle';
+  sortBtn.type = 'button';
+  sortBtn.className = 'catalog-sort-toggle';
+  sortBtn.setAttribute('aria-label', 'Sort by price');
+  sortBtn.setAttribute('aria-expanded', 'false');
+  sortBtn.setAttribute('aria-controls', 'catalog-sort-menu');
+  sortBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
+      <path d="M4 7h10v2H4V7Zm0 5h7v2H4v-2Zm0 5h4v2H4v-2Zm13-9 3 3h-2v7h-2v-7h-2l3-3Z" fill="currentColor"></path>
+    </svg>
+  `;
+
+  const sortMenu = document.createElement('div');
+  sortMenu.id = 'catalog-sort-menu';
+  sortMenu.className = 'catalog-sort-menu hidden';
+  sortMenu.setAttribute('role', 'menu');
+  sortMenu.setAttribute('aria-label', 'Sort products by price');
+  sortMenu.innerHTML = `
+    <button type="button" class="catalog-sort-option" data-sort-option="low-high" role="menuitemradio" aria-checked="false">Low to High</button>
+    <button type="button" class="catalog-sort-option" data-sort-option="high-low" role="menuitemradio" aria-checked="false">High to Low</button>
+  `;
+
+  sortWrap.appendChild(sortBtn);
+  sortWrap.appendChild(sortMenu);
+  titleControls.appendChild(sortWrap);
+  titleControls.appendChild(toggleBtn);
+  heading.parentNode.insertBefore(row, heading);
+  row.appendChild(heading);
+  row.appendChild(titleControls);
+}
+
+function buildMobileDropdownGroup(groupName, label, options, allLabel) {
+  const allOptions = [{ value: 'all', label: allLabel }, ...options];
   return `
-    ${hasGender ? `
-      <div class="filter-group">
-        <h4 class="filter-group-title">Gender</h4>
-        ${['all', 'mens', 'womens'].map((g) => `
-          <label class="filter-label">
-            <input type="radio" name="gender-filter" value="${g}" ${state.gender === g ? 'checked' : ''}>
-            <span>${g === 'all' ? 'All' : g.charAt(0).toUpperCase() + g.slice(1)}</span>
-          </label>`).join('')}
-      </div>` : ''}
-    ${cbGroup('Category', 'categories', meta.categories, (v) => CATEGORY_LABELS[v] || v)}
-    ${cbGroup('Brand', 'brands', meta.brands)}
-    <div class="filter-group">
-      <h4 class="filter-group-title">Max Price</h4>
-      <p id="price-display" class="price-display">Up to ${formatCurrency(meta.maxPrice)}</p>
-      <input type="range" id="price-max-input" class="price-range"
-        min="0" max="${meta.maxPrice}" value="${state.maxPrice}" step="100">
-    </div>`;
-}   
+    <section class="mobile-filter-group" aria-label="${sanitizeText(label)} filter options" data-mobile-filter-group="${groupName}">
+      <label class="mobile-filter-label" for="mobile-dropdown-${groupName}">${sanitizeText(label)}</label>
+      <button id="mobile-dropdown-${groupName}" type="button" class="mobile-filter-dropdown-trigger"
+        data-mobile-filter-trigger="${groupName}" aria-haspopup="listbox" aria-expanded="false"
+        aria-controls="mobile-option-list-${groupName}">
+        <span class="mobile-filter-dropdown-value" data-mobile-filter-value="${groupName}">${sanitizeText(allLabel)}</span>
+      </button>
+      <div id="mobile-option-list-${groupName}" class="mobile-filter-dropdown-list hidden"
+        role="listbox" aria-label="${sanitizeText(label)} options">
+        ${allOptions.map((opt, idx) =>
+          `<button type="button"
+            class="mobile-filter-option${idx === 0 ? ' is-active' : ''}"
+            data-mobile-filter-option="${groupName}"
+            data-value="${sanitizeText(opt.value)}"
+            data-label="${sanitizeText(opt.label)}"
+            aria-pressed="${idx === 0 ? 'true' : 'false'}">${sanitizeText(opt.label)}</button>`
+        ).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function renderPriceRange(filtersMeta, selected, suffix = '') {
+  const id = suffix ? `-${suffix}` : '';
+  return `
+    <div class="price-range-stack">
+      <div class="price-range-input-row">
+        <div class="price-range-control">
+          <label for="min-price${id}">Minimum amount</label>
+          <input id="min-price${id}" type="number" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.minPrice}" aria-label="Minimum price amount">
+        </div>
+        <div class="price-range-control">
+          <label for="max-price${id}">Maximum amount</label>
+          <input id="max-price${id}" type="number" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.maxPrice}" aria-label="Maximum price amount">
+        </div>
+      </div>
+      <div class="price-range-dual" data-price-range>
+        <div class="price-range-track" aria-hidden="true"></div>
+        <div class="price-range-progress" aria-hidden="true"></div>
+        <input id="min-price-slider${id}" class="price-range-slider price-range-slider-min" type="range" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.minPrice}" aria-label="Minimum price slider">
+        <input id="max-price-slider${id}" class="price-range-slider price-range-slider-max" type="range" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.maxPrice}" aria-label="Maximum price slider">
+      </div>
+      <div class="range-scale"><span>${formatCurrency(0)}</span><span>${formatCurrency(filtersMeta.maxPrice)}</span></div>
+    </div>
+  `;
+}
+
+function ensureFilterBackdrop() {
+  let bd = document.getElementById('catalog-filter-backdrop');
+  if (!bd) {
+    bd = document.createElement('div');
+    bd.id = 'catalog-filter-backdrop';
+    bd.className = 'filter-panel-backdrop hidden';
+    document.body.appendChild(bd);
+  }
+  return bd;
+}
+
+function setFilterPanelVisibility(panel, filterToggleBtn, forceOpen) {
+  const shouldOpen = typeof forceOpen === 'boolean'
+    ? forceOpen
+    : panel.classList.contains('filter-panel-collapsed');
+  const isDesktop = window.innerWidth > 1024;
+  const backdrop = document.getElementById('catalog-filter-backdrop');
+
+  panel.classList.toggle('filter-panel-collapsed', !shouldOpen);
+  filterToggleBtn?.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+  backdrop?.classList.toggle('hidden', !(shouldOpen && !isDesktop));
+
+  // Also collapse/expand the catalog layout columns so product area fills space
+  try {
+    const layout = panel.closest('.catalog-layout');
+    if (layout) {
+      layout.classList.toggle('catalog-layout-collapsed', !shouldOpen);
+    }
+  } catch (e) {
+    // ignore if DOM structure not as expected
+  }
+
+  // Also set an inline grid template on the layout when collapsed to ensure
+  // the product section fills the available width across breakpoints.
+  try {
+    const layoutEl = panel.closest('.catalog-layout');
+    if (layoutEl) {
+      if (!shouldOpen) layoutEl.style.gridTemplateColumns = '1fr';
+      else layoutEl.style.gridTemplateColumns = '';
+      
+      // Also toggle class on parent block element to adjust its grid layout
+      const blockEl = layoutEl.closest('.product-grid.mens, .product-grid.womens');
+      if (blockEl) {
+        blockEl.classList.toggle('block-layout-collapsed', !shouldOpen);
+        // Also force inline style to ensure it applies
+        if (!shouldOpen) {
+          blockEl.style.gridTemplateColumns = '1fr';
+        } else {
+          blockEl.style.gridTemplateColumns = '';
+        }
+      }
+    }
+  } catch (e) {
+    // noop
+  }
+}
+
+function syncFilterControls(panel, filtersMeta, selected, sortMenu) {
+  // Sync number inputs and sliders
+  [
+    { id: 'min-price', isMin: true },
+    { id: 'max-price', isMin: false },
+    { id: 'min-price-mobile', isMin: true },
+    { id: 'max-price-mobile', isMin: false },
+  ].forEach(({ id, isMin }) => {
+    const input = document.getElementById(id);
+    if (input instanceof HTMLInputElement) {
+      input.value = String(isMin ? selected.minPrice : selected.maxPrice);
+      if (isMin) input.max = String(selected.maxPrice);
+      else input.min = String(selected.minPrice);
+    }
+  });
+
+  [
+    { id: 'min-price-slider', isMin: true },
+    { id: 'max-price-slider', isMin: false },
+    { id: 'min-price-slider-mobile', isMin: true },
+    { id: 'max-price-slider-mobile', isMin: false },
+  ].forEach(({ id, isMin }) => {
+    const input = document.getElementById(id);
+    if (input instanceof HTMLInputElement) {
+      input.value = String(isMin ? selected.minPrice : selected.maxPrice);
+      if (isMin) input.max = String(selected.maxPrice);
+      else input.min = String(selected.minPrice);
+    }
+  });
+
+  // Sync range progress visual
+  const maxVal = Math.max(filtersMeta.maxPrice, 1);
+  const start = (selected.minPrice / maxVal) * 100;
+  const end = (selected.maxPrice / maxVal) * 100;
+  panel.querySelectorAll('[data-price-range]').forEach((el) => {
+    if (el instanceof HTMLElement) {
+      el.style.setProperty('--range-start', `${start}%`);
+      el.style.setProperty('--range-end', `${end}%`);
+    }
+  });
+
+  // Sync desktop checkboxes
+  panel.querySelectorAll('input[name="category"]').forEach((el) => {
+    if (el instanceof HTMLInputElement) el.checked = selected.categories.has(el.value);
+  });
+  panel.querySelectorAll('input[name="size"]').forEach((el) => {
+    if (el instanceof HTMLInputElement) el.checked = selected.sizes.has(el.value);
+  });
+  panel.querySelectorAll('input[name="brand"]').forEach((el) => {
+    if (el instanceof HTMLInputElement) el.checked = selected.brands.has(el.value);
+  });
+  panel.querySelectorAll('input[name="gender"]').forEach((el) => {
+    if (el instanceof HTMLInputElement) el.checked = el.value === selected.gender;
+  });
+
+  // Sync mobile option buttons
+  panel.querySelectorAll('[data-mobile-filter-option]').forEach((btn) => {
+    if (!(btn instanceof HTMLButtonElement)) return;
+    const group = btn.dataset.mobileFilterOption;
+    const val = btn.dataset.value || 'all';
+    let active = false;
+    if (group === 'gender') active = selected.gender === val;
+    if (group === 'category') active = val === 'all' ? !selected.categories.size : selected.categories.has(val);
+    if (group === 'size') active = val === 'all' ? !selected.sizes.size : selected.sizes.has(val);
+    if (group === 'brand') active = val === 'all' ? !selected.brands.size : selected.brands.has(val);
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+
+  // Sync mobile dropdown value labels
+  panel.querySelectorAll('[data-mobile-filter-value]').forEach((label) => {
+    if (!(label instanceof HTMLElement)) return;
+    const group = label.dataset.mobileFilterValue;
+    const active = panel.querySelector(`[data-mobile-filter-option="${group}"].is-active`);
+    if (active instanceof HTMLButtonElement) label.textContent = active.dataset.label || active.textContent || 'All';
+  });
+
+  // Sync sort menu active state
+  sortMenu?.querySelectorAll('[data-sort-option]').forEach((opt) => {
+    if (!(opt instanceof HTMLButtonElement)) return;
+    const active = opt.dataset.sortOption === selected.sort;
+    opt.classList.toggle('is-active', active);
+    opt.setAttribute('aria-checked', active ? 'true' : 'false');
+  });
+}
+
+function renderFiltered(products, selected, grid) {
+  let filtered = products.filter(
+    (p) => p.price >= selected.minPrice && p.price <= selected.maxPrice
+  );
+
+  if (selected.categories.size) {
+    filtered = filtered.filter((p) => selected.categories.has(p.category));
+  }
+  if (selected.sizes.size) {
+    filtered = filtered.filter((p) => (p.sizes || []).some((s) => selected.sizes.has(String(s))));
+  }
+  if (selected.brands.size) {
+    filtered = filtered.filter((p) => selected.brands.has(p.brand));
+  }
+
+  if (selected.sort === 'low-high') {
+    filtered = [...filtered].sort((a, b) => a.price - b.price);
+  }
+  if (selected.sort === 'high-low') {
+    filtered = [...filtered].sort((a, b) => b.price - a.price);
+  }
+
+  grid.innerHTML = filtered.length
+    ? filtered.map((p) => productCard(p)).join('')
+    : '<p>No products match your filters.</p>';
+}
+
+function renderCatalogPage(products, includeGender = false, forcedGender = null) {
+  const panel = document.getElementById('filter-panel');
+  const grid = document.getElementById('product-grid');
+  const gridSection = document.getElementById('product-grid-section');
+  if (!panel || !grid || !gridSection) return;
+
+  // 1. Build title row
+  buildTitleRow(gridSection);
+
+  // 2. Derive filter meta + defaults from URL params
+  const filtersMeta = buildCatalogFilters(products, includeGender);
+  const selected = getCatalogDefaults(filtersMeta, includeGender, forcedGender);
+
+  // 3. Build mobile dropdown helpers
+  const CATEGORY_LABELS_MAP = {
+    training: 'Training Shoes',
+    running: 'Running Shoes',
+    multisport: 'Multisport Shoes',
+    casual: 'Casual Shoes',
+    sneakers: 'Sneakers',
+  };
+
+  const mobileCategoryGroup = buildMobileDropdownGroup(
+    'category',
+    'Categories',
+    filtersMeta.categories.map((c) => ({ value: c, label: CATEGORY_LABELS_MAP[c] || c })),
+    'All Categories'
+  );
+  const mobileSizeGroup = buildMobileDropdownGroup(
+    'size',
+    'Sizes',
+    filtersMeta.sizes.map((s) => ({ value: String(s), label: String(s) })),
+    'All Sizes'
+  );
+  const mobileBrandGroup = buildMobileDropdownGroup(
+    'brand',
+    'Brands',
+    filtersMeta.brands.map((b) => ({ value: b, label: b })),
+    'All Brands'
+  );
+  const mobileGenderGroup = includeGender
+    ? buildMobileDropdownGroup('gender', 'Gender',
+        [{ value: 'mens', label: 'Mens' }, { value: 'womens', label: 'Womens' }], 'All')
+    : '';
+
+  // 4. Inject desktop + mobile filter forms into panel
+  panel.innerHTML = `
+    <form id="catalog-filter-form" class="filter-desktop-form" aria-label="Product filters">
+      <div class="filter-panel-head">
+        <h2>Filter & Sort</h2>
+        <div class="filter-panel-head-actions">
+          <button id="reset-filters" class="btn-outline filter-reset-btn" type="button" data-filter-reset aria-label="Reset filters">Reset</button>
+          <button id="close-filters-desktop" class="btn-outline filter-close-btn" type="button" aria-label="Close filters">Close</button>
+        </div>
+      </div>
+      <div class="filter-group filter-group-range"><h3>Price Range</h3>${renderPriceRange(filtersMeta, selected)}</div>
+      ${includeGender ? `<div class="filter-group"><h3>Gender</h3><div class="checkbox-list filter-options-inline"><label class="filter-chip"><input type="radio" name="gender" value="all" checked><span>All</span></label><label class="filter-chip"><input type="radio" name="gender" value="mens"><span>Mens</span></label><label class="filter-chip"><input type="radio" name="gender" value="womens"><span>Womens</span></label></div></div>` : ''}
+      <div class="filter-group"><h3>Categories</h3><div class="checkbox-list filter-options-grid">
+        ${filtersMeta.categories.map((c) => `<label class="filter-chip"><input type="checkbox" name="category" value="${sanitizeText(c)}"><span>${sanitizeText(CATEGORY_LABELS_MAP[c] || c)}</span></label>`).join('')}
+      </div></div>
+      <div class="filter-group"><h3>Sizes</h3><div class="checkbox-list filter-options-grid">
+        ${filtersMeta.sizes.map((s) => `<label class="filter-chip"><input type="checkbox" name="size" value="${sanitizeText(s)}"><span>${sanitizeText(s)}</span></label>`).join('')}
+      </div></div>
+      <div class="filter-group"><h3>Brands</h3><div class="checkbox-list filter-options-grid">
+        ${filtersMeta.brands.map((b) => `<label class="filter-chip"><input type="checkbox" name="brand" value="${sanitizeText(b)}"><span>${sanitizeText(b)}</span></label>`).join('')}
+      </div></div>
+    </form>
+
+    <form id="catalog-filter-mobile" class="filter-mobile-form" aria-label="Product filters for smaller screens">
+      <div class="filter-mobile-bar">
+        <div><p class="filter-mobile-kicker">Refine results</p><h2>Filters</h2></div>
+        <div class="filter-mobile-actions">
+          <button id="reset-filters-mobile" class="btn-outline filter-reset-btn" type="button" data-filter-reset aria-label="Reset filters">Reset</button>
+          <button id="close-filters-mobile" class="btn-outline filter-close-btn" type="button" aria-label="Close filters">Close</button>
+        </div>
+      </div>
+      <div class="filter-group filter-group-range"><h3>Price Range</h3>${renderPriceRange(filtersMeta, selected, 'mobile')}</div>
+      ${mobileGenderGroup}
+      ${mobileCategoryGroup}
+      ${mobileSizeGroup}
+      ${mobileBrandGroup}
+    </form>
+  `;
+
+  // 5. Wire up backdrop, toggle, sort, close, reset, input/change/click events
+  const filterToggleBtn = document.getElementById('catalog-filter-toggle');
+  const sortToggleBtn = document.getElementById('catalog-sort-toggle');
+  const sortMenu = document.getElementById('catalog-sort-menu');
+  const filterBackdrop = ensureFilterBackdrop();
+
+  setFilterPanelVisibility(panel, filterToggleBtn, false);
+
+  filterToggleBtn?.addEventListener('click', () => setFilterPanelVisibility(panel, filterToggleBtn));
+  filterBackdrop?.addEventListener('click', () => setFilterPanelVisibility(panel, filterToggleBtn, false));
+  document.getElementById('close-filters-desktop')?.addEventListener('click', () => setFilterPanelVisibility(panel, filterToggleBtn, false));
+  document.getElementById('close-filters-mobile')?.addEventListener('click', () => setFilterPanelVisibility(panel, filterToggleBtn, false));
+  window.addEventListener('resize', () => setFilterPanelVisibility(panel, filterToggleBtn, false), { passive: true });
+
+  // Sort toggle
+  sortToggleBtn?.addEventListener('click', () => {
+    const open = sortMenu.classList.contains('hidden');
+    sortMenu.classList.toggle('hidden', !open);
+    sortToggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  sortMenu?.addEventListener('click', (e) => {
+    const btn = e.target;
+    if (!(btn instanceof HTMLButtonElement) || !btn.dataset.sortOption) return;
+    selected.sort = btn.dataset.sortOption;
+    doRender();
+    sortMenu.classList.add('hidden');
+    sortToggleBtn?.setAttribute('aria-expanded', 'false');
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target?.closest('.catalog-sort-wrap')) {
+      sortMenu?.classList.add('hidden');
+      sortToggleBtn?.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // Reset
+  panel.querySelectorAll('[data-filter-reset]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selected.minPrice = 0;
+      selected.maxPrice = filtersMeta.maxPrice;
+      selected.categories.clear();
+      selected.sizes.clear();
+      selected.brands.clear();
+      selected.gender = 'all';
+      selected.sort = 'default';
+      [document.getElementById('catalog-filter-form'), document.getElementById('catalog-filter-mobile')]
+        .forEach((form) => { if (form instanceof HTMLFormElement) form.reset(); });
+      doRender();
+    });
+  });
+
+  // Price input / slider
+  panel.addEventListener('input', (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement)) return;
+    if (t.id.startsWith('min-price')) {
+      selected.minPrice = Math.max(0, Math.min(Number(t.value), selected.maxPrice));
+      doRender();
+    }
+    if (t.id.startsWith('max-price')) {
+      selected.maxPrice = Math.min(filtersMeta.maxPrice, Math.max(Number(t.value), selected.minPrice));
+      doRender();
+    }
+  });
+
+  // Checkbox change
+  panel.addEventListener('change', (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement)) return;
+    if (t.name === 'category') { t.checked ? selected.categories.add(t.value) : selected.categories.delete(t.value); }
+    if (t.name === 'size') { t.checked ? selected.sizes.add(t.value) : selected.sizes.delete(t.value); }
+    if (t.name === 'brand') { t.checked ? selected.brands.add(t.value) : selected.brands.delete(t.value); }
+    if (t.name === 'gender') { selected.gender = t.value; }
+    doRender();
+  });
+
+  // Mobile dropdown clicks
+  function closeAllMobileDropdowns() {
+    panel.querySelectorAll('.mobile-filter-dropdown-list').forEach((l) => l.classList.add('hidden'));
+    panel.querySelectorAll('[data-mobile-filter-trigger]').forEach((btn) => btn.setAttribute('aria-expanded', 'false'));
+  }
+
+  panel.addEventListener('click', (e) => {
+    const tgt = e.target;
+    if (!(tgt instanceof Element)) return;
+
+    const trigger = tgt.closest('[data-mobile-filter-trigger]');
+    if (trigger instanceof HTMLButtonElement) {
+      const group = trigger.dataset.mobileFilterTrigger;
+      const list = panel.querySelector(`#mobile-option-list-${group}`);
+      if (!(list instanceof HTMLElement)) return;
+      const open = list.classList.contains('hidden');
+      closeAllMobileDropdowns();
+      list.classList.toggle('hidden', !open);
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      return;
+    }
+
+    const optBtn = tgt.closest('[data-mobile-filter-option]');
+    if (!(optBtn instanceof HTMLButtonElement)) {
+      if (!tgt.closest('.mobile-filter-group')) closeAllMobileDropdowns();
+      return;
+    }
+
+    const group = optBtn.dataset.mobileFilterOption;
+    const val = optBtn.dataset.value || 'all';
+    if (group === 'gender') { selected.gender = val; }
+    if (group === 'category') { selected.categories.clear(); if (val !== 'all') selected.categories.add(val); }
+    if (group === 'size') { selected.sizes.clear(); if (val !== 'all') selected.sizes.add(val); }
+    if (group === 'brand') { selected.brands.clear(); if (val !== 'all') selected.brands.add(val); }
+    closeAllMobileDropdowns();
+    doRender();
+  });
+
+  // 6. Render function
+  function doRender() {
+    syncFilterControls(panel, filtersMeta, selected, sortMenu);
+    renderFiltered(products, selected, grid);
+  }
+
+  doRender(); // initial render
+}
+
+
+
