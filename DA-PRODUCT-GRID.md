@@ -13,6 +13,7 @@ Use a real EDS block variation, not plain text labels:
 - `product-grid(featured)` - featured products
 - `product-grid(search)` - search results
 - `product-grid(wishlist)` - wishlist page
+- `product-grid(categories)` - categories landing page
 
 ## Mens Page Authoring
 
@@ -52,6 +53,27 @@ Use this structure for the mens page:
 | og:image | /media/banner/womens.png |
 ```
 
+## Categories Page Authoring
+
+Use this structure for the categories page:
+
+```md
+| product-grid(categories) | |
+|---|---|
+| variation | categories |
+| eyebrow | Category atlas |
+| title | Choose the edit that matches your pace. |
+| subtitle | Browse the core category collections directly, with each tile tuned to feel broad, balanced, and easy to scan. |
+
+---
+
+| Metadata | |
+|---|---|
+| title | Adokicks | Categories |
+| description | Browse Adokicks shoes by category across men's and women's running, training, casual, multisport and sneaker collections. |
+| og:image | /media/banner/categories.png |
+```
+
 ## Catalog Filters
 
 The block supports these filter fields in the authored table:
@@ -60,6 +82,8 @@ The block supports these filter fields in the authored table:
 - `title` - page heading shown above the grid
 - `gender` - `mens`, `womens`, or omitted for a shared catalog
 - `limit` - optional item limit for featured grids
+- `eyebrow` - optional categories hero eyebrow
+- `subtitle` - optional categories hero subtitle
 
 ## Important Notes
 
