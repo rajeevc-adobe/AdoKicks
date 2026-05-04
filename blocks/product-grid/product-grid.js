@@ -1,5 +1,5 @@
 import { getProducts, CATEGORY_LABELS } from '../../scripts/product-store.js';
-import { formatCurrency, isWishlisted, toggleWishlist, toast, getWishlist } from '../../scripts/cart-store.js';
+import { formatCurrency, isWishlisted, toggleWishlist, toast, getWishlist, addToCart } from '../../scripts/cart-store.js';
 
 export default async function decorate(block) {
   // Read DA option rows (key | value)
@@ -15,7 +15,7 @@ export default async function decorate(block) {
   block.innerHTML = `<div class="pg-loading" aria-busy="true"><span class="pg-spinner"></span></div>`;
 
   try {
-    if (variation === 'wishlist') { await renderWishlist(block); return; }
+    if (variation === 'wishlist') { await renderWishlist(block, opts); return; }
     const products = await getProducts();
     if (variation === 'categories') { renderCategories(block, products, opts); return; }
     if      (variation === 'catalog')  renderCatalog(block, products, { ...opts, gender: inferredGender });
@@ -66,6 +66,7 @@ function getPageVariation() {
   const path = window.location.pathname.toLowerCase();
   if (path === '/categories' || path === '/categories.html' || path.endsWith('/categories')) return 'categories';
   if (path === '/featured' || path === '/featured.html' || path.endsWith('/featured')) return 'featured';
+  if (path === '/wishlist' || path === '/wishlist.html' || path.endsWith('/wishlist')) return 'wishlist';
   return null;
 }
 
@@ -213,7 +214,8 @@ function renderSearch(block, products) {
   });
 }
 
-async function renderWishlist(block) {
+// eslint-disable-next-line no-unused-vars
+async function renderWishlistLegacy(block) {
   const wishlist = getWishlist();
   if (!wishlist.length) {
     block.innerHTML = `
@@ -239,6 +241,94 @@ async function renderWishlist(block) {
       btn.closest('.product-card')?.remove();
     }
   });
+}
+
+async function renderWishlist(block, opts = {}) {
+  const wishlist = getWishlist();
+  block.classList.add('wishlist');
+  document.body.dataset.page = 'wishlist';
+
+  if (!wishlist.length) {
+    block.innerHTML = `
+      <div class="wishlist-empty">
+        <div class="wishlist-empty-icon">♡</div>
+        <h1>${sanitizeText(opts.emptyTitle || 'Your wishlist is empty')}</h1>
+        <p>${sanitizeText(opts.emptyText || 'Browse our collections and hit the heart on any shoe to save it here.')}</p>
+        <a href="/categories" class="button primary">Start Browsing</a>
+      </div>`;
+    return;
+  }
+
+  const products = await getProducts();
+  const items = wishlist.map((id) => products.find((p) => p.id === id)).filter(Boolean);
+  block.innerHTML = `
+    <section class="wishlist-page" aria-label="Wishlist">
+      <div class="wishlist-head">
+        <p class="eyebrow">${sanitizeText(opts.eyebrow || 'Saved picks')}</p>
+        <h1>${sanitizeText(opts.title || 'Your Wishlist')}</h1>
+        <p>${sanitizeText(opts.subtitle || 'Choose a size and move a saved pair straight into your bag.')}</p>
+      </div>
+      <div class="wishlist-grid" role="list" aria-label="Your wishlist">
+        ${items.map((p) => wishlistCard(p)).join('')}
+      </div>
+    </section>`;
+
+  if (!block.dataset.wishlistBound) {
+    block.dataset.wishlistBound = 'true';
+    block.addEventListener('click', async (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      const removeBtn = target.closest('[data-action="wishlist-remove"]');
+      if (removeBtn instanceof HTMLElement) {
+        toggleWishlist(removeBtn.dataset.productId);
+        toast('Removed from wishlist', 'success');
+        await renderWishlist(block, opts);
+        return;
+      }
+
+      const addBtn = target.closest('[data-action="wishlist-add-cart"]');
+      if (addBtn instanceof HTMLElement) {
+        const card = addBtn.closest('.wishlist-card');
+        const size = card?.querySelector('[data-wishlist-size]')?.value || '';
+        const ok = addToCart(addBtn.dataset.productId, size, 1);
+        if (ok) {
+          toast('Moved to bag', 'success');
+          await renderWishlist(block, opts);
+        }
+      }
+    });
+  }
+}
+
+function wishlistCard(product) {
+  const firstImage = (product.images && product.images[0]) || '/adokicks.png';
+  const sizes = product.sizes || [];
+  return `
+    <article class="wishlist-card" role="listitem" aria-label="${sanitizeText(product.title)} wishlist item">
+      <a class="wishlist-card-image" href="/product?id=${encodeURIComponent(product.id)}" aria-label="View ${sanitizeText(product.title)} details">
+        <img src="${sanitizeText(firstImage)}" alt="${sanitizeText(product.title)} shoe image" loading="lazy">
+      </a>
+      <div class="wishlist-card-body">
+        <div class="wishlist-card-copy">
+          <p class="wishlist-card-kicker">${sanitizeText(product.brand)} | ${sanitizeText(CATEGORY_LABELS[product.category] || product.category)}</p>
+          <h2><a href="/product?id=${encodeURIComponent(product.id)}">${sanitizeText(product.title)}</a></h2>
+          <p class="price-line"><strong>${formatCurrency(product.price)}</strong> <span class="old-price">${formatCurrency(product.originalPrice)}</span></p>
+        </div>
+        <label class="wishlist-size-label">
+          <span>Size</span>
+          <select data-wishlist-size aria-label="Select size for ${sanitizeText(product.title)}">
+            <option value="">Select size</option>
+            ${sizes.map((size) => `<option value="${sanitizeText(size)}">${sanitizeText(size)}</option>`).join('')}
+          </select>
+        </label>
+        <div class="wishlist-card-actions">
+          <button class="button primary" type="button" data-action="wishlist-add-cart" data-product-id="${sanitizeText(product.id)}">Add to Bag</button>
+          <button class="button secondary" type="button" data-action="wishlist-remove" data-product-id="${sanitizeText(product.id)}">Remove</button>
+        </div>
+      </div>
+    </article>
+  `;
 }
 
 function renderCategories(block, products, opts = {}) {

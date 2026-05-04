@@ -54,6 +54,10 @@ function _setCart(cart) {
   document.dispatchEvent(new CustomEvent('adokicks:cart-updated'));
 }
 
+export function setCart(cart) {
+  _setCart(cart);
+}
+
 /**
  * Adds a product to the cart.
  * @returns {boolean} true if successful
@@ -76,6 +80,10 @@ export function updateCartQty(productId, size, delta) {
   if (!item) return;
   item.qty += delta;
   _setCart(cart.filter((i) => i.qty > 0));
+}
+
+export function removeFromCart(productId, size) {
+  _setCart(getCart().filter((i) => !(i.productId === productId && String(i.size) === String(size))));
 }
 
 export function cartItemCount() {

@@ -94,6 +94,27 @@ Use this structure for the categories page:
 | og:image | /media/banner/featured.png |
 ```
 
+## Wishlist Page Authoring
+
+```md
+| product-grid(wishlist) | |
+|---|---|
+| variation | wishlist |
+| eyebrow | Saved picks |
+| title | Your Wishlist |
+| subtitle | Choose a size and move a saved pair straight into your bag. |
+| emptyTitle | Your wishlist is empty |
+| emptyText | Browse our collections and hit the heart on any shoe to save it here. |
+
+---
+
+| Metadata | |
+|---|---|
+| title | Adokicks | Wishlist |
+| description | View saved Adokicks shoes and move wishlist items into your shopping bag. |
+| og:image | /media/banner/wishlist.png |
+```
+
 ## Catalog Filters
 
 The block supports these filter fields in the authored table:

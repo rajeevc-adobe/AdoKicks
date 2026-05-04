@@ -1,4 +1,4 @@
-import { getCart, cartItemCount, getWishlist, getCurrentUser, logout, toast, formatCurrency, updateCartQty } from '../../scripts/cart-store.js';
+import { getCart, getWishlist, getCurrentUser, toast, formatCurrency } from '../../scripts/cart-store.js';
 
 let cartOpen = false;
 let searchOpen = false;
@@ -362,36 +362,10 @@ export default async function decorate(block) {
   updateBadges();
   document.addEventListener('adokicks:cart-updated', updateBadges);
   document.addEventListener('adokicks:wishlist-updated', updateBadges);
-
-  // Global cart event delegation
-  document.addEventListener('click', (e) => {
-    if (!(e.target instanceof HTMLElement)) return;
-
-    if (e.target.dataset.action === 'cart-inc') {
-      const cart = getCart();
-      const item = cart.find((i) => i.productId === e.target.dataset.productId && String(i.size) === String(e.target.dataset.size));
-      if (item) {
-        item.qty++;
-        localStorage.setItem('adokicks_cart', JSON.stringify(cart));
-        renderCartDrawer(productState);
-      }
-    }
-
-    if (e.target.dataset.action === 'cart-dec') {
-      let cart = getCart();
-      const item = cart.find((i) => i.productId === e.target.dataset.productId && String(i.size) === String(e.target.dataset.size));
-      if (item) {
-        item.qty--;
-        cart = cart.filter((i) => i.qty > 0);
-        localStorage.setItem('adokicks_cart', JSON.stringify(cart));
-        renderCartDrawer(productState);
-      }
-    }
-
-    if (e.target.dataset.action === 'cart-remove') {
-      const cart = getCart().filter((i) => !(i.productId === e.target.dataset.productId && String(i.size) === String(e.target.dataset.size)));
-      localStorage.setItem('adokicks_cart', JSON.stringify(cart));
-      renderCartDrawer(productState);
-    }
+  document.addEventListener('adokicks:cart-render', () => {
+    if (cartOpen) renderCartDrawer(productState);
+  });
+  document.addEventListener('adokicks:cart-updated', () => {
+    if (cartOpen) renderCartDrawer(productState);
   });
 }
