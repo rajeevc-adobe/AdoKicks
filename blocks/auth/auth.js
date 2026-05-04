@@ -1,80 +1,259 @@
-import { getUsers, saveUser, setCurrentUser, getCurrentUser, migrateLegacyData, toast } from '../../scripts/cart-store.js';
+import {
+  getUsers,
+  saveUser,
+  setCurrentUser,
+  getCurrentUser,
+  migrateLegacyData,
+  toast,
+} from '../../scripts/cart-store.js';
+
+function params() {
+  return new URLSearchParams(window.location.search);
+}
+
+function normalizeRedirect(value) {
+  if (!value) return '/';
+  const cleaned = value.replace(/\.html$/i, '').replace(/^index$/i, '');
+  if (!cleaned || cleaned === '/') return '/';
+  return cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
+}
+
+function validatePhone(phone) {
+  return /^\d{10}$/.test(phone);
+}
+
+function validateName(name) {
+  return /^[A-Za-z][A-Za-z ]{1,49}$/.test(name.trim());
+}
+
+function validatePassword(password) {
+  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
+}
+
+function sanitize(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getConfig(block) {
+  const config = {};
+  [...block.children].forEach((row) => {
+    const cells = [...row.children];
+    if (cells.length < 2) return;
+    const key = cells[0].textContent.trim().toLowerCase();
+    const value = cells[1].textContent.trim();
+    if (key) config[key] = value;
+  });
+  return {
+    eyebrow: config.eyebrow || 'Member access',
+    title: config.title || 'Welcome to Adokicks',
+    intro: config.intro || 'Sign in to access your bag, wishlist, and order history, or create a new account in seconds.',
+    benefit1: config.benefit1 || 'Faster checkout with saved profile details',
+    benefit2: config.benefit2 || 'Track orders and delivery updates',
+    benefit3: config.benefit3 || 'Save your favorite shoes in wishlist',
+    image: config.image || '/adokicks.png',
+    stat1: config.stat1 || 'Saved wishlist',
+    stat2: config.stat2 || 'Order tracking',
+  };
+}
+
+async function sha256(input) {
+  if (!window.crypto || !window.crypto.subtle) {
+    return `fallback_${btoa(unescape(encodeURIComponent(input))).replaceAll('=', '')}`;
+  }
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function renderAuthMarkup(block, config) {
+  block.innerHTML = `
+    <section class="auth-shell" aria-label="Login and registration">
+      <aside class="auth-intro section-card" aria-label="Adokicks account benefits">
+        <div class="auth-brand-mark" aria-hidden="true">
+          <img src="${sanitize(config.image)}" alt="">
+        </div>
+        <p class="eyebrow">${sanitize(config.eyebrow)}</p>
+        <h1>${sanitize(config.title)}</h1>
+        <p>${sanitize(config.intro)}</p>
+        <ul class="auth-points" aria-label="Benefits of signing in">
+          <li>${sanitize(config.benefit1)}</li>
+          <li>${sanitize(config.benefit2)}</li>
+          <li>${sanitize(config.benefit3)}</li>
+        </ul>
+        <div class="auth-member-tags" aria-label="Member account features">
+          <span>${sanitize(config.stat1)}</span>
+          <span>${sanitize(config.stat2)}</span>
+        </div>
+      </aside>
+
+      <section class="auth-section" aria-label="Authentication forms">
+        <div class="auth-toggle" role="tablist" aria-label="Choose authentication mode">
+          <button id="login-tab" class="toggle-btn active" role="tab" aria-selected="true" aria-controls="login-form" type="button">Login</button>
+          <button id="signup-tab" class="toggle-btn" role="tab" aria-selected="false" aria-controls="signup-form" type="button">Sign Up</button>
+        </div>
+
+        <p id="auth-message" class="auth-message hidden" role="alert" aria-live="polite"></p>
+
+        <form id="login-form" class="auth-form" novalidate aria-label="Login form">
+          <label for="login-phone">Phone Number</label>
+          <input id="login-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" required aria-label="Login phone number">
+          <label for="login-password">Password</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required aria-label="Login password">
+          <button type="submit" class="btn-primary" aria-label="Sign in">Sign In</button>
+        </form>
+
+        <form id="signup-form" class="auth-form hidden" novalidate aria-label="Signup form">
+          <div class="signup-grid" aria-label="Signup grouped fields">
+            <div class="auth-field">
+              <label for="signup-name">Full Name</label>
+              <input id="signup-name" name="name" type="text" autocomplete="name" required aria-label="Your full name">
+            </div>
+            <div class="auth-field">
+              <label for="signup-phone">Phone Number</label>
+              <input id="signup-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" required aria-label="Signup phone number">
+            </div>
+            <div class="auth-field">
+              <label for="signup-password">Password</label>
+              <input id="signup-password" name="password" type="password" autocomplete="new-password" required aria-label="Create password">
+            </div>
+            <div class="auth-field">
+              <label for="signup-confirm-password">Confirm Password</label>
+              <input id="signup-confirm-password" name="confirmPassword" type="password" autocomplete="new-password" required aria-label="Confirm password">
+            </div>
+          </div>
+          <button type="submit" class="btn-primary" aria-label="Create account">Create Account</button>
+        </form>
+      </section>
+    </section>
+  `;
+}
 
 export default function decorate(block) {
-  if (getCurrentUser()) { window.location.href = '/'; return; }
+  document.body.dataset.page = 'auth';
+  const config = getConfig(block);
+  if (getCurrentUser()) {
+    window.location.href = normalizeRedirect(params().get('redirect'));
+    return;
+  }
 
-  block.innerHTML = `
-    <div class="auth-card section-card">
-      <div class="auth-tabs" role="tablist">
-        <button class="auth-tab active" role="tab" data-tab="login" aria-selected="true" aria-controls="auth-login">Sign In</button>
-        <button class="auth-tab" role="tab" data-tab="signup" aria-selected="false" aria-controls="auth-signup">Create Account</button>
-      </div>
-      <div id="auth-login" class="auth-panel">
-        <form class="auth-form" id="login-form" novalidate>
-          <div class="form-group"><label for="login-phone">Phone Number</label>
-            <input type="tel" id="login-phone" name="phone" placeholder="10-digit phone" autocomplete="tel" required maxlength="10" inputmode="numeric"></div>
-          <div class="form-group"><label for="login-password">Password</label>
-            <input type="password" id="login-password" name="password" placeholder="Enter password" autocomplete="current-password" required></div>
-          <p class="auth-error" id="login-error" role="alert" hidden></p>
-          <button type="submit" class="button primary auth-submit">Sign In</button>
-        </form>
-      </div>
-      <div id="auth-signup" class="auth-panel hidden">
-        <form class="auth-form" id="signup-form" novalidate>
-          <div class="form-group"><label for="signup-name">Full Name</label>
-            <input type="text" id="signup-name" name="name" placeholder="Your full name" autocomplete="name" required></div>
-          <div class="form-group"><label for="signup-phone">Phone Number</label>
-            <input type="tel" id="signup-phone" name="phone" placeholder="10-digit phone" autocomplete="tel" required maxlength="10" inputmode="numeric"></div>
-          <div class="form-group"><label for="signup-password">Password</label>
-            <input type="password" id="signup-password" name="password" placeholder="Min 6 characters" autocomplete="new-password" required minlength="6"></div>
-          <div class="form-group"><label for="signup-confirm">Confirm Password</label>
-            <input type="password" id="signup-confirm" name="confirm" placeholder="Repeat password" autocomplete="new-password" required></div>
-          <p class="auth-error" id="signup-error" role="alert" hidden></p>
-          <button type="submit" class="button primary auth-submit">Create Account</button>
-        </form>
-      </div>
-    </div>`;
+  renderAuthMarkup(block, config);
 
-  block.querySelectorAll('.auth-tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-      block.querySelectorAll('.auth-tab').forEach((t) => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-      block.querySelectorAll('.auth-panel').forEach((p) => p.classList.add('hidden'));
-      tab.classList.add('active'); tab.setAttribute('aria-selected', 'true');
-      block.querySelector(`#auth-${tab.dataset.tab}`)?.classList.remove('hidden');
-    });
-  });
+  const loginTab = block.querySelector('#login-tab');
+  const signupTab = block.querySelector('#signup-tab');
+  const loginForm = block.querySelector('#login-form');
+  const signupForm = block.querySelector('#signup-form');
+  const authMessage = block.querySelector('#auth-message');
 
-  if (window.location.hash === '#signup') block.querySelector('[data-tab="signup"]')?.click();
+  function setAuthMessage(message) {
+    authMessage.textContent = message;
+    authMessage.classList.toggle('hidden', !message);
+  }
 
-  document.getElementById('login-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const phone = e.target.phone.value.trim();
-    const password = e.target.password.value;
-    const errEl = document.getElementById('login-error');
-    const user = getUsers().find((u) => u.phone === phone);
-    if (!user || user.password !== password) {
-      errEl.textContent = 'Phone number or password is incorrect.'; errEl.hidden = false; return;
+  function showLogin() {
+    loginTab.classList.add('active');
+    signupTab.classList.remove('active');
+    loginTab.setAttribute('aria-selected', 'true');
+    signupTab.setAttribute('aria-selected', 'false');
+    loginForm.classList.remove('hidden');
+    signupForm.classList.add('hidden');
+    setAuthMessage('');
+  }
+
+  function showSignup() {
+    signupTab.classList.add('active');
+    loginTab.classList.remove('active');
+    signupTab.setAttribute('aria-selected', 'true');
+    loginTab.setAttribute('aria-selected', 'false');
+    signupForm.classList.remove('hidden');
+    loginForm.classList.add('hidden');
+    setAuthMessage('');
+  }
+
+  if (params().get('notice') === 'please_login') {
+    setAuthMessage('Please login to continue.');
+  }
+
+  loginTab.addEventListener('click', showLogin);
+  signupTab.addEventListener('click', showSignup);
+  if (window.location.hash === '#signup') showSignup();
+
+  loginForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = new FormData(loginForm);
+    const phone = String(form.get('phone') || '').trim();
+    const password = String(form.get('password') || '');
+
+    if (!validatePhone(phone)) {
+      setAuthMessage('Enter a valid 10 digit phone number.');
+      return;
     }
-    errEl.hidden = true;
-    setCurrentUser(phone); migrateLegacyData(phone);
-    toast(`Welcome back, ${user.name.split(' ')[0]}!`, 'success');
-    setTimeout(() => { window.location.href = '/'; }, 500);
+    if (!password) {
+      setAuthMessage('Password is required.');
+      return;
+    }
+
+    const user = getUsers().find((entry) => entry.phone === phone);
+    if (!user) {
+      setAuthMessage('No account found for this phone number.');
+      return;
+    }
+
+    const hashed = await sha256(password);
+    if (user.passwordHash ? hashed !== user.passwordHash : password !== user.password) {
+      setAuthMessage('Incorrect password.');
+      return;
+    }
+
+    setCurrentUser(user.phone);
+    migrateLegacyData(user.phone);
+    setAuthMessage('');
+    toast('Login successful', 'success');
+    window.location.href = normalizeRedirect(params().get('redirect'));
   });
 
-  document.getElementById('signup-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = e.target.name.value.trim();
-    const phone = e.target.phone.value.trim();
-    const password = e.target.password.value;
-    const confirm = e.target.confirm.value;
-    const errEl = document.getElementById('signup-error');
-    if (!/^\d{10}$/.test(phone)) { errEl.textContent = 'Enter a valid 10-digit phone number.'; errEl.hidden = false; return; }
-    if (password.length < 6)    { errEl.textContent = 'Password must be at least 6 characters.'; errEl.hidden = false; return; }
-    if (password !== confirm)   { errEl.textContent = 'Passwords do not match.'; errEl.hidden = false; return; }
-    if (getUsers().find((u) => u.phone === phone)) { errEl.textContent = 'Account with this number already exists.'; errEl.hidden = false; return; }
-    errEl.hidden = true;
-    saveUser({ name, phone, password }); setCurrentUser(phone); migrateLegacyData(phone);
-    toast(`Welcome, ${name.split(' ')[0]}!`, 'success');
-    setTimeout(() => { window.location.href = '/'; }, 500);
+  signupForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = new FormData(signupForm);
+    const name = String(form.get('name') || '').trim();
+    const phone = String(form.get('phone') || '').trim();
+    const password = String(form.get('password') || '');
+    const confirm = String(form.get('confirmPassword') || '');
+
+    if (!validateName(name)) {
+      setAuthMessage('Enter a valid name (letters and spaces, 2-50 chars).');
+      return;
+    }
+    if (!validatePhone(phone)) {
+      setAuthMessage('Enter a valid 10 digit phone number.');
+      return;
+    }
+    if (!validatePassword(password)) {
+      setAuthMessage('Password must be at least 8 characters with uppercase, lowercase, and number.');
+      return;
+    }
+    if (password !== confirm) {
+      setAuthMessage('Password and confirm password must match.');
+      return;
+    }
+    if (getUsers().some((entry) => entry.phone === phone)) {
+      setAuthMessage('This phone number is already registered.');
+      return;
+    }
+
+    const passwordHash = await sha256(password);
+    saveUser({ name, phone, passwordHash });
+    setCurrentUser(phone);
+    migrateLegacyData(phone);
+    setAuthMessage('');
+    toast('Account created successfully', 'success');
+    window.location.href = normalizeRedirect(params().get('redirect'));
   });
 }
