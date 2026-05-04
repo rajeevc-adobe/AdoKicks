@@ -269,8 +269,7 @@
 
 /* Prevent product cards from overflowing */
 .product-card { min-width: 0; }
-  }
-}
+
 
 .catalog-title-row {
   display: flex;
@@ -900,4 +899,5 @@
     transform: translateX(0);
     opacity: 1;
   }
+}
 }
