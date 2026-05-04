@@ -419,41 +419,8 @@ function setFilterPanelVisibility(panel, filterToggleBtn, forceOpen) {
   panel.classList.toggle('filter-panel-collapsed', !shouldOpen);
   filterToggleBtn?.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
   backdrop?.classList.toggle('hidden', !(shouldOpen && !isDesktop));
-
-  // Also collapse/expand the catalog layout columns so product area fills space
-  try {
-    const layout = panel.closest('.catalog-layout');
-    if (layout) {
-      layout.classList.toggle('catalog-layout-collapsed', !shouldOpen);
-    }
-  } catch (e) {
-    // ignore if DOM structure not as expected
-  }
-
-  // Also set an inline grid template on the layout when collapsed to ensure
-  // the product section fills the available width across breakpoints.
-  try {
-    const layoutEl = panel.closest('.catalog-layout');
-    if (layoutEl) {
-      if (!shouldOpen) layoutEl.style.gridTemplateColumns = '1fr';
-      else layoutEl.style.gridTemplateColumns = '';
-      
-      // Also toggle class on parent block element to adjust its grid layout
-      const blockEl = layoutEl.closest('.product-grid.mens, .product-grid.womens');
-      if (blockEl) {
-        blockEl.classList.toggle('block-layout-collapsed', !shouldOpen);
-        // Also force inline style to ensure it applies
-        if (!shouldOpen) {
-          blockEl.style.gridTemplateColumns = '1fr';
-        } else {
-          blockEl.style.gridTemplateColumns = '';
-        }
-      }
-    }
-  } catch (e) {
-    // noop
-  }
 }
+
 
 function syncFilterControls(panel, filtersMeta, selected, sortMenu) {
   // Sync number inputs and sliders

@@ -32,6 +32,13 @@
   margin-top: 1.25rem;
 }
 
+/* Wrapper should NOT be a grid */
+.product-grid.mens,
+.product-grid.womens {
+  display: block;
+  margin-top: 0;
+}
+
 @media (max-width: 1440px) {
   .product-grid {
     grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
@@ -205,128 +212,63 @@
 .wishlist-empty-icon { font-size: 4rem; color: var(--color-border); }
 .wishlist-empty h2 { margin: 0; }
 
-/* Catalog layout (advanced reusable variant for mens/womens + generic catalog) */
+/* Catalog layout: filter overlays on top, product grid always fills space */
 .catalog-layout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 1rem;
+  display: block;
+  position: relative;
+  width: 100%;
   min-width: 0;
 }
 
-/* When the filter sidebar is collapsed, let the product area take full width */
+/* Product section always takes full width */
+#product-grid-section {
+  width: 100%;
+  display: block;
+}
 
-.catalog-layout.catalog-layout-collapsed {
-  /* When collapsed, keep grid layout but a single column so product area fills space */
+/* Product grid responsive columns - always full width - CATALOG ONLY */
+#product-grid-section .product-grid {
   display: grid;
-  grid-template-columns: 1fr !important;
-}
-
-/* Ensure product grid inside collapsed layout still forms sensible columns
-   instead of stretching into a single oversized column. */
-.catalog-layout.catalog-layout-collapsed .product-grid {
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 1rem;
+  gap: 0.8rem;
   width: 100%;
-
-
-/* Prevent the grid from overflowing its collapsed container and ensure it fits available width */
-.catalog-layout.catalog-layout-collapsed {
-  overflow-x: hidden;
-}
-.catalog-layout.catalog-layout-collapsed > #product-grid-section {
-  width: 100%;
-  max-width: 100%;
-}
-.catalog-layout.catalog-layout-collapsed .product-grid {
-  grid-auto-columns: 1fr;
-  max-width: 100%;
-  box-sizing: border-box;
+  justify-items: stretch;
+  min-width: 0;
 }
 
-/* When the layout is collapsed, allow columns to shrink to avoid reserved empty space */
-.catalog-layout.catalog-layout-collapsed .product-grid {
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr)) !important;
-}
-
-/* Stronger rules specifically for the #product-grid element to avoid overflow */
-.catalog-layout.catalog-layout-collapsed #product-grid {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr)) !important;
-  overflow-x: hidden !important;
-}
-
-.catalog-layout.catalog-layout-collapsed > #product-grid-section {
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-}
-/* Use reference-like responsive min widths when sidebar is collapsed */
-@media (max-width: 1024px) {
-  .catalog-layout.catalog-layout-collapsed .product-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+/* Responsive column counts - CATALOG */
+@media (min-width: 1440px) {
+  #product-grid-section .product-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
-
-@media (max-width: 680px) {
-  .catalog-layout.catalog-layout-collapsed .product-grid {
+@media (min-width: 1200px) and (max-width: 1439px) {
+  #product-grid-section .product-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+  #product-grid-section .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 680px) and (max-width: 1023px) {
+  #product-grid-section .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 480px) and (max-width: 679px) {
+  #product-grid-section .product-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.8rem;
   }
 }
-
-
-@media (max-width: 480px) {
-  .catalog-layout.catalog-layout-collapsed .product-grid {
+@media (max-width: 479px) {
+  #product-grid-section .product-grid {
     grid-template-columns: 1fr;
   }
 }
 
-/* When filter panel is collapsed, adjust the block grid layout to single column */
-.product-grid.mens.block-layout-collapsed,
-.product-grid.womens.block-layout-collapsed {
-  grid-template-columns: 1fr !important;
-}
-
-}
-
-/* When collapsed, make the product section span the whole layout grid tracks */
-.catalog-layout.catalog-layout-collapsed > #product-grid-section {
-  grid-column: 1 / -1;
-  width: 100%;
-}
-
-/* Explicit column counts per reference when sidebar is collapsed */
-@media (min-width: 1440px) {
-  .catalog-layout.catalog-layout-collapsed .product-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-}
-@media (min-width: 1200px) and (max-width: 1439px) {
-  .catalog-layout.catalog-layout-collapsed .product-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-}
-@media (min-width: 1024px) and (max-width: 1199px) {
-  .catalog-layout.catalog-layout-collapsed .product-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-@media (min-width: 680px) and (max-width: 1023px) {
-  .catalog-layout.catalog-layout-collapsed .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-@media (min-width: 480px) and (max-width: 679px) {
-  .catalog-layout.catalog-layout-collapsed .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 479px) {
-  .catalog-layout.catalog-layout-collapsed .product-grid { grid-template-columns: 1fr; }
-}
-
-/* Prevent product cards from overflowing or forcing a single column */
+/* Prevent product cards from overflowing */
 .product-card { min-width: 0; }
-
-.product-grid { width: 100%; justify-items: stretch; }
-
-/* Force 6 columns at a lower desktop threshold to match user expectation */
-@media (min-width: 992px) {
-  .catalog-layout.catalog-layout-collapsed .product-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
@@ -440,20 +382,28 @@
 }
 
 .filter-panel {
-  position: sticky;
-  top: calc(var(--header-offset, 78px) + 6px);
-  align-self: start;
-  border: 1px solid var(--line);
-  background: linear-gradient(180deg, #ffffff 0%, #fff7f7 100%);
-  border-radius: 16px;
-  padding: 1rem;
-  box-shadow: 0 12px 26px rgba(17, 24, 39, 0.08);
-  max-height: calc(100vh - 96px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 320px;
+  height: 100vh;
+  background: var(--surface, #fff);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
   overflow-y: auto;
+  z-index: 1001;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  padding: 1.5rem;
+}
+
+/* When open (not collapsed), slide in from left */
+.filter-panel:not(.filter-panel-collapsed) {
+  transform: translateX(0);
 }
 
 .filter-panel.filter-panel-collapsed {
-  display: none;
+  transform: translateX(-100%);
+  pointer-events: none;
 }
 
 .filter-panel::-webkit-scrollbar {
@@ -754,6 +704,35 @@
     gap: 0.8rem;
   }
 
+/* Backdrop for filter overlay */
+#catalog-filter-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+#catalog-filter-backdrop.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Mobile filter form visibility */
+.filter-mobile-form {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .filter-mobile-form {
+    display: block;
+  }
+  .filter-desktop-form {
+    display: none;
+  }
   .filter-panel {
     position: fixed;
     left: 0;
