@@ -1,30 +1,59 @@
-import { getOrders, formatCurrency } from '../../scripts/cart-store.js';
+import { getOrders } from '../../scripts/cart-store.js';
+
+function params() {
+  return new URLSearchParams(window.location.search);
+}
+
+function sanitize(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getConfig(block) {
+  const config = {};
+  [...block.children].forEach((row) => {
+    const cells = [...row.children];
+    if (cells.length < 2) return;
+    const key = cells[0].textContent.trim().toLowerCase();
+    const value = cells[1].textContent.trim();
+    if (key) config[key] = value;
+  });
+  return {
+    title: config.title || 'Order Placed Successfully',
+    message: config.message || 'You will be redirected to My Orders in',
+    cta: config.cta || 'Go Now',
+  };
+}
 
 export default function decorate(block) {
-  const orders = getOrders();
-  const latest = orders[0];
-  if (!latest) {
-    block.innerHTML = `<div class="oc-wrap"><p>No recent order found.</p><a href="/" class="button primary">Go Home</a></div>`;
-    return;
-  }
-  block.innerHTML = `
-    <div class="oc-wrap section-card">
-      <div class="oc-check">✓</div>
-      <h2>Order Confirmed!</h2>
-      <p class="oc-id">Order ID: <strong>${latest.id}</strong></p>
-      <p class="oc-note">Redirecting to My Orders in <span id="oc-countdown">10</span>s…</p>
-      <div class="oc-items">
-        ${(latest.items || []).map((i) => `
-          <div class="oc-item">
-            <p class="oc-item-title">${i.title}</p>
-            <p class="oc-item-meta">Size UK ${i.size} · Qty ${i.qty} · ${formatCurrency(i.price * i.qty)}</p>
-          </div>`).join('')}
-      </div>
-      <div class="oc-total"><span>Total Paid</span><strong>${formatCurrency(latest.total)}</strong></div>
-      <a href="/my-orders" class="button primary oc-cta">View My Orders</a>
-    </div>`;
+  document.body.dataset.page = 'confirmation';
+  const config = getConfig(block);
+  const latest = getOrders()[0];
+  const orderId = params().get('orderId') || latest?.id || '';
 
-  let s = 10;
-  const el = document.getElementById('oc-countdown');
-  setInterval(() => { s -= 1; if (el) el.textContent = s; if (s <= 0) window.location.href = '/my-orders'; }, 1000);
+  block.innerHTML = `
+    <section class="confirmation" aria-label="Order placed confirmation">
+      <div class="checkmark" aria-hidden="true">&#10003;</div>
+      <h1>${sanitize(config.title)}</h1>
+      <p id="confirmation-order-id">${orderId ? `Order ID: ${sanitize(orderId)}` : 'Order submitted.'}</p>
+      <p>${sanitize(config.message)} <span id="redirect-seconds">10</span> seconds.</p>
+      <a href="/my-orders" class="btn-secondary" aria-label="Go to my orders now">${sanitize(config.cta)}</a>
+    </section>
+  `;
+
+  const sec = block.querySelector('#redirect-seconds');
+  let countdown = 10;
+  sec.textContent = String(countdown);
+  const timer = setInterval(() => {
+    countdown -= 1;
+    sec.textContent = String(countdown);
+    if (countdown <= 0) {
+      clearInterval(timer);
+      window.location.href = '/my-orders';
+    }
+  }, 1000);
 }

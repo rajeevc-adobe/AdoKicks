@@ -135,13 +135,13 @@ export function getOrders() { return sGet(SK.orders, []); }
  * @returns {object} the created order
  */
 export function placeOrder(cart, shippingData, byId) {
-  const id = `ADO-${Date.now()}`;
+  const id = `AK${Date.now().toString(36).toUpperCase()}`;
   const items = cart.map((entry) => {
     const p = byId[entry.productId];
     return p ? { title: p.title, size: entry.size, qty: entry.qty, price: p.price } : null;
   }).filter(Boolean);
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
-  const total = subtotal >= 999 ? subtotal : subtotal + 99;
+  const total = subtotal;
   const order = {
     id,
     date: new Date().toISOString(),
