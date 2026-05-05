@@ -138,16 +138,28 @@ export function placeOrder(cart, shippingData, byId) {
   const id = `AK${Date.now().toString(36).toUpperCase()}`;
   const items = cart.map((entry) => {
     const p = byId[entry.productId];
-    return p ? { title: p.title, size: entry.size, qty: entry.qty, price: p.price } : null;
+    return p ? {
+      productId: entry.productId,
+      title: p.title,
+      size: entry.size,
+      qty: entry.qty,
+      price: p.price,
+      image: p.images?.[0] || '',
+    } : null;
   }).filter(Boolean);
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const total = subtotal;
+  const createdAt = new Date().toISOString();
   const order = {
     id,
-    date: new Date().toISOString(),
+    createdAt,
+    date: createdAt,
+    userPhone: sRaw(SK.currentUser) || shippingData.phone || '',
     status: 'Confirmed',
     items,
+    subtotal,
     total,
+    address: shippingData,
     shipping: shippingData,
   };
   const orders = getOrders();
