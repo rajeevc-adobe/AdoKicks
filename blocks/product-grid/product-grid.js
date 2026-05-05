@@ -1,5 +1,7 @@
 import { getProducts, CATEGORY_LABELS } from '../../scripts/product-store.js';
-import { formatCurrency, isWishlisted, toggleWishlist, toast, getWishlist } from '../../scripts/cart-store.js';
+import {
+  formatCurrency, isWishlisted, toggleWishlist, toast, getWishlist,
+} from '../../scripts/cart-store.js';
 
 export default async function decorate(block) {
   // Read DA option rows (key | value)
@@ -12,18 +14,18 @@ export default async function decorate(block) {
     || getPageVariation()
     || (blockGender ? 'catalog' : 'trending');
 
-  block.innerHTML = `<div class="pg-loading" aria-busy="true"><span class="pg-spinner"></span></div>`;
+  block.innerHTML = '<div class="pg-loading" aria-busy="true"><span class="pg-spinner"></span></div>';
 
   try {
     if (variation === 'wishlist') { await renderWishlist(block, opts); return; }
     const products = await getProducts();
     if (variation === 'categories') { renderCategories(block, products, opts); return; }
-    if      (variation === 'catalog')  renderCatalog(block, products, { ...opts, gender: inferredGender });
+    if (variation === 'catalog') renderCatalog(block, products, { ...opts, gender: inferredGender });
     else if (variation === 'featured') renderFeatured(block, products, opts);
-    else if (variation === 'search')   renderSearch(block, products);
-    else                               renderTrending(block, products, opts);
+    else if (variation === 'search') renderSearch(block, products);
+    else renderTrending(block, products, opts);
   } catch (err) {
-    block.innerHTML = `<p class="pg-error">Unable to load products. Please refresh.</p>`;
+    block.innerHTML = '<p class="pg-error">Unable to load products. Please refresh.</p>';
     // eslint-disable-next-line no-console
     console.error('[product-grid]', err);
   }
@@ -105,7 +107,7 @@ function sanitizeText(value) {
 }
 
 function productCard(product, showDescription = false) {
-  const firstImage = (product.images && product.images[0]) || "adokicks.png";
+  const firstImage = (product.images && product.images[0]) || 'adokicks.png';
   const wishActive = isWishlisted(product.id);
   return `
     <article class="product-card" role="listitem" aria-label="${product.title} product card">
@@ -116,9 +118,9 @@ function productCard(product, showDescription = false) {
         <h3><a href="/product?id=${encodeURIComponent(product.id)}">${product.title}</a></h3>
         <p>${product.brand} | ${CATEGORY_LABELS[product.category] || product.category}</p>
         <p class="price-line"><strong>${formatCurrency(product.price)}</strong> <span class="old-price">${formatCurrency(product.originalPrice)}</span></p>
-        ${showDescription ? `<p>${product.description}</p>` : ""}
+        ${showDescription ? `<p>${product.description}</p>` : ''}
         <div class="price-line card-actions-row">
-          <button class="heart-btn ${wishActive?"active":""}" type="button" data-action="wishlist-toggle" data-product-id="${product.id}" aria-label="Toggle wishlist for ${product.title}" title="Wishlist">&#10084;</button>
+          <button class="heart-btn ${wishActive ? 'active' : ''}" type="button" data-action="wishlist-toggle" data-product-id="${product.id}" aria-label="Toggle wishlist for ${product.title}" title="Wishlist">&#10084;</button>
           <a href="/product?id=${encodeURIComponent(product.id)}" class="btn-secondary" aria-label="Shop ${product.title}">Shop</a>
         </div>
       </div>
@@ -126,7 +128,7 @@ function productCard(product, showDescription = false) {
   `;
 }
 
-function renderTrending(block, products, opts) {
+function renderTrending(block, products) {
   // Extract heading and subtitle from first row of authored content
   const firstRow = block.querySelector(':scope > div');
   const heading = firstRow?.querySelector('h2')?.textContent.trim() || 'Trending Now';
@@ -145,7 +147,7 @@ function renderTrending(block, products, opts) {
         <p>${subtitle}</p>
       </div>
       <div class="product-grid trending-grid" role="list" aria-label="Trending products">
-        ${items.map(p => productCard(p)).join("")}
+        ${items.map((p) => productCard(p)).join('')}
       </div>
     </div>
   `;
@@ -184,8 +186,7 @@ function renderFeatured(block, products, opts) {
 
 function renderSearch(block, products) {
   const q = new URLSearchParams(window.location.search).get('q')?.toLowerCase().trim() || '';
-  const hits = q ? products.filter((p) =>
-    `${p.title} ${p.brand} ${p.category}`.toLowerCase().includes(q)) : [];
+  const hits = q ? products.filter((p) => `${p.title} ${p.brand} ${p.category}`.toLowerCase().includes(q)) : [];
 
   block.innerHTML = `
     <div class="search-page">
@@ -195,16 +196,16 @@ function renderSearch(block, products) {
         <button type="submit" class="button primary">Search</button>
       </form>
       ${q
-        ? `<p class="search-summary" aria-live="polite">
+    ? `<p class="search-summary" aria-live="polite">
              ${hits.length} result${hits.length !== 1 ? 's' : ''} for "<strong>${q}</strong>"
            </p>
            <div class="product-grid" role="list">
              ${hits.length
-               ? hits.map((p) => productCard(p)).join('')
-               : '<p class="no-results">No products match your search.</p>'}
+    ? hits.map((p) => productCard(p)).join('')
+    : '<p class="no-results">No products match your search.</p>'}
            </div>`
-        : '<p class="search-prompt">Enter a search term to find shoes.</p>'
-      }
+    : '<p class="search-prompt">Enter a search term to find shoes.</p>'
+}
     </div>`;
 
   block.querySelector('.search-form')?.addEventListener('submit', (e) => {
@@ -266,7 +267,7 @@ async function renderWishlist(block, opts = {}) {
   if (!block.dataset.wishlistBound) {
     block.dataset.wishlistBound = 'true';
     block.addEventListener('click', async (e) => {
-      const target = e.target;
+      const { target } = e;
       if (!(target instanceof HTMLElement)) return;
 
       const wishBtn = target.closest('[data-action="wishlist-toggle"]');
@@ -535,14 +536,12 @@ function buildMobileDropdownGroup(groupName, label, options, allLabel) {
       </button>
       <div id="mobile-option-list-${groupName}" class="mobile-filter-dropdown-list hidden"
         role="listbox" aria-label="${sanitizeText(label)} options">
-        ${allOptions.map((opt, idx) =>
-          `<button type="button"
+        ${allOptions.map((opt, idx) => `<button type="button"
             class="mobile-filter-option${idx === 0 ? ' is-active' : ''}"
             data-mobile-filter-option="${groupName}"
             data-value="${sanitizeText(opt.value)}"
             data-label="${sanitizeText(opt.label)}"
-            aria-pressed="${idx === 0 ? 'true' : 'false'}">${sanitizeText(opt.label)}</button>`
-        ).join('')}
+            aria-pressed="${idx === 0 ? 'true' : 'false'}">${sanitizeText(opt.label)}</button>`).join('')}
       </div>
     </section>
   `;
@@ -595,7 +594,6 @@ function setFilterPanelVisibility(panel, filterToggleBtn, forceOpen) {
   filterToggleBtn?.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
   backdrop?.classList.toggle('hidden', !(shouldOpen && !isDesktop));
 }
-
 
 function syncFilterControls(panel, filtersMeta, selected, sortMenu) {
   // Sync number inputs and sliders
@@ -685,7 +683,7 @@ function syncFilterControls(panel, filtersMeta, selected, sortMenu) {
 
 function renderFiltered(products, selected, grid) {
   let filtered = products.filter(
-    (p) => p.price >= selected.minPrice && p.price <= selected.maxPrice
+    (p) => p.price >= selected.minPrice && p.price <= selected.maxPrice,
   );
 
   if (selected.categories.size) {
@@ -736,23 +734,27 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null)
     'category',
     'Categories',
     filtersMeta.categories.map((c) => ({ value: c, label: CATEGORY_LABELS_MAP[c] || c })),
-    'All Categories'
+    'All Categories',
   );
   const mobileSizeGroup = buildMobileDropdownGroup(
     'size',
     'Sizes',
     filtersMeta.sizes.map((s) => ({ value: String(s), label: String(s) })),
-    'All Sizes'
+    'All Sizes',
   );
   const mobileBrandGroup = buildMobileDropdownGroup(
     'brand',
     'Brands',
     filtersMeta.brands.map((b) => ({ value: b, label: b })),
-    'All Brands'
+    'All Brands',
   );
   const mobileGenderGroup = includeGender
-    ? buildMobileDropdownGroup('gender', 'Gender',
-        [{ value: 'mens', label: 'Mens' }, { value: 'womens', label: 'Womens' }], 'All')
+    ? buildMobileDropdownGroup(
+      'gender',
+      'Gender',
+      [{ value: 'mens', label: 'Mens' }, { value: 'womens', label: 'Womens' }],
+      'All',
+    )
     : '';
 
   // 4. Inject desktop + mobile filter forms into panel
@@ -766,7 +768,7 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null)
         </div>
       </div>
       <div class="filter-group filter-group-range"><h3>Price Range</h3>${renderPriceRange(filtersMeta, selected)}</div>
-      ${includeGender ? `<div class="filter-group"><h3>Gender</h3><div class="checkbox-list filter-options-inline"><label class="filter-chip"><input type="radio" name="gender" value="all" checked><span>All</span></label><label class="filter-chip"><input type="radio" name="gender" value="mens"><span>Mens</span></label><label class="filter-chip"><input type="radio" name="gender" value="womens"><span>Womens</span></label></div></div>` : ''}
+      ${includeGender ? '<div class="filter-group"><h3>Gender</h3><div class="checkbox-list filter-options-inline"><label class="filter-chip"><input type="radio" name="gender" value="all" checked><span>All</span></label><label class="filter-chip"><input type="radio" name="gender" value="mens"><span>Mens</span></label><label class="filter-chip"><input type="radio" name="gender" value="womens"><span>Womens</span></label></div></div>' : ''}
       <div class="filter-group"><h3>Categories</h3><div class="checkbox-list filter-options-grid">
         ${filtersMeta.categories.map((c) => `<label class="filter-chip"><input type="checkbox" name="category" value="${sanitizeText(c)}"><span>${sanitizeText(CATEGORY_LABELS_MAP[c] || c)}</span></label>`).join('')}
       </div></div>
@@ -863,9 +865,18 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null)
   panel.addEventListener('change', (e) => {
     const t = e.target;
     if (!(t instanceof HTMLInputElement)) return;
-    if (t.name === 'category') { t.checked ? selected.categories.add(t.value) : selected.categories.delete(t.value); }
-    if (t.name === 'size') { t.checked ? selected.sizes.add(t.value) : selected.sizes.delete(t.value); }
-    if (t.name === 'brand') { t.checked ? selected.brands.add(t.value) : selected.brands.delete(t.value); }
+    if (t.name === 'category') {
+      if (t.checked) selected.categories.add(t.value);
+      else selected.categories.delete(t.value);
+    }
+    if (t.name === 'size') {
+      if (t.checked) selected.sizes.add(t.value);
+      else selected.sizes.delete(t.value);
+    }
+    if (t.name === 'brand') {
+      if (t.checked) selected.brands.add(t.value);
+      else selected.brands.delete(t.value);
+    }
     if (t.name === 'gender') { selected.gender = t.value; }
     doRender();
   });
@@ -916,6 +927,3 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null)
 
   doRender(); // initial render
 }
-
-
-

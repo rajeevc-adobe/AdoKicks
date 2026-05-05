@@ -3,12 +3,12 @@ export default function decorate(block) {
   const variation = getCardsVariation(block, opts);
   if (variation) block.classList.add(variation);
   if (variation === 'about-hero') { decorateAboutHero(block, opts); return; }
-  if (variation === 'composed')  { decorateComposed(block);    return; }
+  if (variation === 'composed') { decorateComposed(block); return; }
   if (variation === 'about-strip') { decorateAboutStrip(block); return; }
-  if (variation === 'metrics')     { decorateMetrics(block);    return; }
-  if (variation === 'values')      { decorateValues(block, opts);     return; }
-  if (variation === 'timeline')    { decorateTimeline(block);   return; }
-  if (variation === 'categories')  { decorateCategories(block); return; }
+  if (variation === 'metrics') { decorateMetrics(block); return; }
+  if (variation === 'values') { decorateValues(block, opts); return; }
+  if (variation === 'timeline') { decorateTimeline(block); return; }
+  if (variation === 'categories') { decorateCategories(block); return; }
   decorateDefault(block);
 }
 
@@ -117,17 +117,17 @@ function decorateDefault(block) {
   block.innerHTML = `
     <div class="cards-grid">
       ${rows.map((row) => {
-        const cells = [...row.children];
-        const img   = cells[0]?.querySelector('img');
-        const link  = cells[1]?.querySelector('a');
-        const label = link?.textContent?.trim() || cells[1]?.textContent?.trim() || '';
-        const href  = link?.href || '#';
-        return `
+    const cells = [...row.children];
+    const img = cells[0]?.querySelector('img');
+    const link = cells[1]?.querySelector('a');
+    const label = link?.textContent?.trim() || cells[1]?.textContent?.trim() || '';
+    const href = link?.href || '#';
+    return `
           <a class="simple-card" href="${href}" aria-label="${label}">
             ${img ? `<img src="${img.src}" alt="${img.alt || label}" loading="lazy">` : ''}
             <span class="simple-card-label">${label}</span>
           </a>`;
-      }).join('')}
+  }).join('')}
     </div>`;
 }
 
@@ -137,15 +137,15 @@ function decorateCategories(block) {
   block.innerHTML = `
     <div class="categories-grid">
       ${rows.map((row) => {
-        const cells = [...row.children];
-        const imgMarkup = imageMarkup(cells[0], cells[1]?.textContent?.trim() || '');
-        const link  = cells[1]?.querySelector('a');
-        const title = link?.textContent?.trim() || cells[1]?.textContent?.trim() || '';
-        const href  = link?.href || '#';
-        const collection = cells[2]?.textContent?.trim() || '';
-        const category   = cells[3]?.textContent?.trim() || '';
-        const desc       = cells[4]?.textContent?.trim() || '';
-        return `
+    const cells = [...row.children];
+    const imgMarkup = imageMarkup(cells[0], cells[1]?.textContent?.trim() || '');
+    const link = cells[1]?.querySelector('a');
+    const title = link?.textContent?.trim() || cells[1]?.textContent?.trim() || '';
+    const href = link?.href || '#';
+    const collection = cells[2]?.textContent?.trim() || '';
+    const category = cells[3]?.textContent?.trim() || '';
+    const desc = cells[4]?.textContent?.trim() || '';
+    return `
           <article class="category-card">
             <a href="${href}" class="category-card-img-link" aria-label="${title}">
               ${imgMarkup}
@@ -158,28 +158,28 @@ function decorateCategories(block) {
               <a href="${href}" class="button secondary">Explore</a>
             </div>
           </article>`;
-      }).join('')}
+  }).join('')}
     </div>`;
 }
 
 function decorateAboutStrip(block) {
   const rows = contentRows(block);
-  const imgRow   = rows[0];
+  const imgRow = rows[0];
   const labelRow = rows[1];
-  const imgCells   = imgRow   ? [...imgRow.children]   : [];
+  const imgCells = imgRow ? [...imgRow.children] : [];
   const labelCells = labelRow ? [...labelRow.children] : [];
   block.innerHTML = `
     <div class="about-strip-grid">
       ${imgCells.map((cell, i) => {
-        const imgMarkup = imageMarkup(cell, labelCells[i]?.textContent?.trim() || '');
-        const label   = labelCells[i]?.textContent?.trim() || '';
-        if (!imgMarkup) return '';
-        return `
+    const imgMarkup = imageMarkup(cell, labelCells[i]?.textContent?.trim() || '');
+    const label = labelCells[i]?.textContent?.trim() || '';
+    if (!imgMarkup) return '';
+    return `
           <div class="about-image-panel">
             ${imgMarkup}
             ${label ? `<span>${label}</span>` : ''}
           </div>`;
-      }).join('')}
+  }).join('')}
     </div>`;
 }
 
@@ -188,20 +188,20 @@ function decorateMetrics(block) {
   block.innerHTML = `
     <section class="about-metric-grid" aria-label="Adokicks brand metrics">
       ${rows.map((row) => {
-        const cells = [...row.children];
-        return `
+    const cells = [...row.children];
+    return `
           <article class="metric-card">
             <p class="metric-label">${cells[1]?.textContent?.trim() || ''}</p>
             <h2>${cells[0]?.textContent?.trim() || ''}</h2>
           </article>`;
-      }).join('')}
+  }).join('')}
     </section>`;
 }
 
 function decorateValues(block, opts = {}) {
   const rows = contentRows(block);
   const titles = rows[0] ? [...rows[0].children] : [];
-  const descs  = rows[1] ? [...rows[1].children] : [];
+  const descs = rows[1] ? [...rows[1].children] : [];
   const kicker = opts.kicker || 'What we stand for';
   const title = opts.title || 'Three principles behind every release';
   block.innerHTML = `

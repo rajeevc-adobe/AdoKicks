@@ -103,9 +103,9 @@ function renderOrderDetail(order, list, detail, byId) {
           <h3>Items</h3>
           <div class="order-items-list">
             ${(order.items || []).map((item) => {
-              const product = itemProduct(item, byId);
-              const itemTotal = (item.price || product.price || 0) * item.qty;
-              return `
+    const product = itemProduct(item, byId);
+    const itemTotal = (item.price || product.price || 0) * item.qty;
+    return `
                 <article class="order-item-card" aria-label="${sanitize(product.title)} ordered item">
                   <img src="${sanitize(product.images?.[0] || '/adokicks.png')}" alt="${sanitize(product.title)} order image">
                   <div class="order-item-body">
@@ -118,7 +118,7 @@ function renderOrderDetail(order, list, detail, byId) {
                   </div>
                 </article>
               `;
-            }).join('')}
+  }).join('')}
           </div>
         </section>
         <aside class="order-block order-address-card" aria-label="Delivery address">

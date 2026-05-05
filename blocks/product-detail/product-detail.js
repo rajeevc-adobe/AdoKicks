@@ -1,6 +1,8 @@
 import { params, formatCurrency, sanitize } from '../../scripts/scripts.js';
 import { getProductById } from '../../scripts/product-store.js';
-import { addToCart, toggleWishlist, isWishlisted, toast } from '../../scripts/cart-store.js';
+import {
+  addToCart, toggleWishlist, isWishlisted, toast,
+} from '../../scripts/cart-store.js';
 
 const CATEGORY_LABELS = {
   training: 'Training Shoes',
@@ -29,7 +31,7 @@ function parseCurrencyValue(value) {
 
 function parseSizes(value) {
   return normalizeText(value)
-    .replace(/^sizes?\s*[:\-]?\s*/i, '')
+    .replace(/^sizes?\s*[:-]?\s*/i, '')
     .split(/[,/;|\n]/)
     .map((size) => size.trim())
     .filter(Boolean);
@@ -135,7 +137,7 @@ function parseDAContent(block) {
   // DA may only have metadata (SEO fields) with NO product data
   // Check if this looks like a metadata-only doc (has metadata fields but no product fields)
   const hasProductData = meta.price || meta['sale price'] || meta.brand || meta.category || meta.id || meta['product id'];
-  
+
   if (!hasProductData) {
     // Only metadata, no product data. Return null so we fall back to ?id= query param
     return null;
@@ -292,7 +294,7 @@ export default async function decorate(block) {
 
   const daProduct = parseDAContent(block);
 
-  block.innerHTML = `<div class="pg-loading"><span class="pg-spinner"></span></div>`;
+  block.innerHTML = '<div class="pg-loading"><span class="pg-spinner"></span></div>';
 
   try {
     let product = daProduct;
@@ -346,7 +348,7 @@ export default async function decorate(block) {
 
     renderDetail();
   } catch (err) {
-    block.innerHTML = `<p class="pg-error">Unable to load product. Please refresh.</p>`;
+    block.innerHTML = '<p class="pg-error">Unable to load product. Please refresh.</p>';
     // eslint-disable-next-line no-console
     console.error('[product-detail]', err);
   }

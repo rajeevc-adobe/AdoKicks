@@ -1,12 +1,13 @@
 export default function decorate(block) {
   const rows = [...block.children];
-  
+
   // Determine if this is gender banners or regular banners
   if (block.classList.contains('gender')) {
     decorateGenderBanners(block, rows);
   } else {
     const isFull = block.classList.contains('full');
-    isFull ? decorateFull(block, rows) : decorateSplit(block, rows);
+    if (isFull) decorateFull(block, rows);
+    else decorateSplit(block, rows);
   }
 }
 
@@ -14,7 +15,7 @@ function getPageContext() {
   // Detect current page from body dataset or URL path
   const page = document.body.dataset.page || '';
   const path = window.location.pathname;
-  
+
   if (page === 'mens' || path.includes('/mens')) return 'mens';
   if (page === 'womens' || path.includes('/womens')) return 'womens';
   return 'home';
@@ -22,39 +23,39 @@ function getPageContext() {
 
 function decorateGenderBanners(block, rows) {
   const bannerData = [];
-  
+
   // Process rows in pairs: each banner is 2 rows
   for (let i = 0; i < rows.length; i += 2) {
     const row1 = rows[i];
     const row2 = rows[i + 1];
-    
+
     if (!row1 || !row2) continue;
-    
+
     const row1Cells = [...row1.children];
     const row2Cells = [...row2.children];
-    
+
     // Row 1: Cell 0 = image, Cell 1 = heading
     const imgElement = row1Cells[0]?.querySelector('img');
     const headingText = row1Cells[1]?.textContent?.trim() || '';
-    
+
     // Row 2: Cell 0 = subtitle, Cell 1 = link
     const subtitleText = row2Cells[0]?.textContent?.trim() || '';
     const linkElement = row2Cells[1]?.querySelector('a');
-    
+
     if (imgElement) {
       bannerData.push({
         img: imgElement.src,
         alt: imgElement.alt || '',
         heading: headingText,
         subtitle: subtitleText,
-        href: linkElement?.href || '#'
+        href: linkElement?.href || '#',
       });
     }
   }
-  
+
   const pageContext = getPageContext();
   let displayBanners = bannerData.slice(0, 2);
-  
+
   // Filter banners based on page context
   if (pageContext === 'mens') {
     displayBanners = [bannerData[0]]; // Show only men banner full-width
@@ -64,7 +65,7 @@ function decorateGenderBanners(block, rows) {
     block.classList.add('full-width-gender');
   }
   // else: on home, show both side-by-side
-  
+
   // Render banners
   const bannerHTML = displayBanners.map((banner, idx) => {
     const bannerClass = idx === 0 ? 'men-banner' : 'women-banner';
@@ -78,7 +79,7 @@ function decorateGenderBanners(block, rows) {
       </a>
     `;
   }).join('');
-  
+
   block.innerHTML = `<div class="banner-row">${bannerHTML}</div>`;
 }
 
@@ -107,7 +108,9 @@ function parsePair(rows, i) {
   };
 }
 
-function bannerCard({ image, title, sub, ctaHref }, cardClass = '') {
+function bannerCard({
+  image, title, sub, ctaHref,
+}, cardClass = '') {
   return `
     <a class="banner-card ${cardClass}" href="${ctaHref}" aria-label="${title}">
       ${image}

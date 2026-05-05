@@ -111,10 +111,10 @@ function renderSummary(summary, cart, byId) {
       </div>
       <div class="checkout-items-list">
         ${cart.map((item) => {
-          const product = byId[item.productId];
-          if (!product) return '';
-          const itemTotal = product.price * item.qty;
-          return `
+    const product = byId[item.productId];
+    if (!product) return '';
+    const itemTotal = product.price * item.qty;
+    return `
             <article class="checkout-item-card">
               <img src="${sanitize(product.images?.[0] || '/adokicks.png')}" alt="${sanitize(product.title)} thumbnail">
               <div class="checkout-item-body">
@@ -127,7 +127,7 @@ function renderSummary(summary, cart, byId) {
               </div>
             </article>
           `;
-        }).join('')}
+  }).join('')}
       </div>
       <div class="checkout-pricing">
         <div class="summary-row"><span>Subtotal</span><strong>${formatCurrency(subtotal)}</strong></div>

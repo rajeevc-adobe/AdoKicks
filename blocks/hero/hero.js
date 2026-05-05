@@ -17,17 +17,13 @@ function decorateVideo(block) {
   const videoSrc = videoSrcRaw
     ? videoSrcRaw.trim().replace(/\s+/g, '%20').replace(/\.mov$/, '.mp4')
     : '/carousalvideo.mp4';
-    console.log('Raw video src:', videoSrcRaw);
-    console.log('Processed video src:', videoSrc);
   const normalizedVideoSrc = videoSrc.startsWith('/') || videoSrc.startsWith('http')
     ? videoSrc
     : `/${videoSrc}`;
 
-  console.log('Hero video src:', normalizedVideoSrc);
-
   const slides = rows.slice(1).reduce((acc, row) => {
     const [c0, c1] = [...row.children];
-    const title    = c0?.textContent?.trim();
+    const title = c0?.textContent?.trim();
     const subtitle = c1?.textContent?.trim() || '';
     if (title) acc.push({ title, subtitle });
     return acc;
@@ -54,28 +50,23 @@ function decorateVideo(block) {
 
   const video = article.querySelector('.hero-video');
   if (video) {
-    video.addEventListener('loadstart', () => console.log('Video load started'));
-    video.addEventListener('loadeddata', () => console.log('Video data loaded'));
-    video.addEventListener('error', (e) => {
-      console.error('Video error:', e);
+    video.addEventListener('error', () => {
       // Fallback: hide video and show background image
       video.style.display = 'none';
       article.style.backgroundImage = 'url(/adokicks.png)';
       article.style.backgroundSize = 'cover';
       article.style.backgroundPosition = 'center';
     });
-    video.addEventListener('canplay', () => console.log('Video can play'));
   }
 
   if (slides.length <= 1) return;
 
-  const titleEl    = article.querySelector('.hero-title');
+  const titleEl = article.querySelector('.hero-title');
   const subtitleEl = article.querySelector('.hero-subtitle');
-  const pauseBtn   = article.querySelector('.hero-pause-btn');
-  const pauseIcon  = article.querySelector('.pause-icon');
+  const pauseBtn = article.querySelector('.hero-pause-btn');
   // const video      = article.querySelector('.hero-video'); // already declared above
   let current = 0;
-  let paused  = false;
+  let paused = false;
 
   // [titleEl, subtitleEl].forEach((el) => {
   //   el.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
@@ -83,7 +74,7 @@ function decorateVideo(block) {
 
   function cycleSlide() {
     current = (current + 1) % slides.length;
-    titleEl.textContent    = slides[current].title;
+    titleEl.textContent = slides[current].title;
     subtitleEl.textContent = slides[current].subtitle;
   }
 
@@ -109,17 +100,17 @@ function decorateVideo(block) {
 }
 
 function decorateStatic(block) {
-  const img     = block.querySelector('img, picture');
+  const img = block.querySelector('img, picture');
   const heading = block.querySelector('h1, h2');
-  const sub     = [...block.querySelectorAll('p')].find((p) => !p.querySelector('picture, img'));
-  const cta     = block.querySelector('a');
+  const sub = [...block.querySelectorAll('p')].find((p) => !p.querySelector('picture, img'));
+  const cta = block.querySelector('a');
   block.innerHTML = `
     <article class="hero hero--static">
       ${img?.tagName === 'PICTURE' ? img.outerHTML : (img ? `<picture><img src="${img.src}" alt="${img.alt || ''}" loading="eager" fetchpriority="high"></picture>` : '')}
       <div class="hero-content">
         ${heading ? `<h1 class="hero-title">${heading.textContent.trim()}</h1>` : ''}
-        ${sub     ? `<p class="hero-subtitle">${sub.textContent.trim()}</p>` : ''}
-        ${cta     ? `<a href="${cta.href}" class="button primary">${cta.textContent.trim()}</a>` : ''}
+        ${sub ? `<p class="hero-subtitle">${sub.textContent.trim()}</p>` : ''}
+        ${cta ? `<a href="${cta.href}" class="button primary">${cta.textContent.trim()}</a>` : ''}
       </div>
     </article>`;
 }

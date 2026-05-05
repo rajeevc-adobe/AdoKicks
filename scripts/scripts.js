@@ -49,14 +49,6 @@ export * from './cart-store.js';
 // ─── Constants (mirror of original app.js CATEGORY_LABELS + STORAGE_KEYS) ────
 // Re-exported via product-store.js and cart-store.js above.
 // Kept here as a named constant for inline use in scripts.js itself.
-const STORAGE_KEYS = {
-  users:       'adokicks_users',
-  currentUser: 'adokicks_current_user_phone',
-  cart:        'adokicks_cart',
-  wishlist:    'adokicks_wishlist',
-  orders:      'adokicks_orders',
-};
-
 // ─── Utilities used by multiple blocks ───────────────────────────────────────
 
 /**
@@ -175,7 +167,7 @@ function bindGlobalDelegation() {
   }
 
   document.addEventListener('click', async (event) => {
-    const target = event.target;
+    const { target } = event;
     if (!(target instanceof HTMLElement)) return;
 
     // ── Wishlist toggle ──────────────────────────────────────────────────────

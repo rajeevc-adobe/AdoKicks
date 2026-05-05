@@ -6,11 +6,11 @@
 
 /* ── Storage keys ───────────────────────────────────────────────────── */
 const SK = {
-  users:       'adokicks_users',
+  users: 'adokicks_users',
   currentUser: 'adokicks_current_user_phone',
-  cart:        'adokicks_cart',
-  wishlist:    'adokicks_wishlist',
-  orders:      'adokicks_orders',
+  cart: 'adokicks_cart',
+  wishlist: 'adokicks_wishlist',
+  orders: 'adokicks_orders',
 };
 
 /* ── Storage helpers ────────────────────────────────────────────────── */
@@ -25,7 +25,7 @@ function sRaw(key) {
 }
 
 /* ── Auth ───────────────────────────────────────────────────────────── */
-export function getUsers()  { return sGet(SK.users, []); }
+export function getUsers() { return sGet(SK.users, []); }
 export function saveUser(u) {
   const users = getUsers();
   const idx = users.findIndex((x) => x.phone === u.phone);
@@ -165,14 +165,14 @@ export function placeOrder(cart, shippingData, byId) {
   const orders = getOrders();
   orders.unshift(order);
   sSet(SK.orders, orders);
-  _setCart([]);   // clear cart after placing order
+  _setCart([]); // clear cart after placing order
   return order;
 }
 
 /* ── Legacy data migration (called on login) ──────────────────────── */
 export function migrateLegacyData(phone) {
   const scopedCart = sGet(`${SK.cart}_${phone}`, []);
-  const guestCart  = sGet(SK.cart, []);
+  const guestCart = sGet(SK.cart, []);
   if (guestCart.length) {
     const merged = [...scopedCart];
     guestCart.forEach((g) => {
@@ -183,7 +183,7 @@ export function migrateLegacyData(phone) {
     localStorage.removeItem(SK.cart);
   }
   const scopedWl = sGet(`${SK.wishlist}_${phone}`, []);
-  const guestWl  = sGet(SK.wishlist, []);
+  const guestWl = sGet(SK.wishlist, []);
   if (guestWl.length) {
     sSet(`${SK.wishlist}_${phone}`, [...new Set([...scopedWl, ...guestWl])]);
     localStorage.removeItem(SK.wishlist);

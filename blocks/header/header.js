@@ -87,9 +87,7 @@ function bindSearchPopup(products) {
       results.innerHTML = '';
       return;
     }
-    const hits = products.filter((p) =>
-      `${p.title} ${p.brand} ${p.category}`.toLowerCase().includes(q)
-    ).slice(0, 7);
+    const hits = products.filter((p) => `${p.title} ${p.brand} ${p.category}`.toLowerCase().includes(q)).slice(0, 7);
     results.innerHTML = hits.length
       ? hits.map((p) => `<a class="quick-item" href="/product?id=${encodeURIComponent(p.id)}" role="listitem">
           <img src="${sanitize(p.images?.[0] || '/adokicks.png')}" alt="${sanitize(p.title)}">
@@ -110,6 +108,7 @@ function bindSearchPopup(products) {
   });
 
   close.addEventListener('click', () => {
+    const panel = document.getElementById('search-pop');
     searchOpen = false;
     panel?.classList.add('hidden');
     backdrop?.classList.add('hidden');
@@ -309,8 +308,8 @@ export default async function decorate(block) {
             <span id="cart-count-mobile" class="icon-count">0</span>
           </button>
           ${user
-            ? '<button id="profile-btn-mobile" class="icon-btn nav-icon-btn nav-mobile-icon nav-auth-icon" type="button" aria-label="Profile menu" title="Profile"><img src="/assests/icons/person-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg"></button>'
-            : '<a href="/auth" class="icon-btn nav-icon-btn nav-mobile-icon nav-auth-icon" aria-label="Sign in" title="Sign in"><img src="/assests/icons/person-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg"></a>'}
+    ? '<button id="profile-btn-mobile" class="icon-btn nav-icon-btn nav-mobile-icon nav-auth-icon" type="button" aria-label="Profile menu" title="Profile"><img src="/assests/icons/person-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg"></button>'
+    : '<a href="/auth" class="icon-btn nav-icon-btn nav-mobile-icon nav-auth-icon" aria-label="Sign in" title="Sign in"><img src="/assests/icons/person-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg"></a>'}
           <button id="mobile-menu-btn" class="icon-btn nav-icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
             <span class="menu-toggle-lines" aria-hidden="true"><span></span><span></span><span></span></span>
           </button>
@@ -341,8 +340,8 @@ export default async function decorate(block) {
               <span id="cart-count" class="icon-count">0</span>
             </button>
             ${user
-              ? `<div class="profile-wrap"><button id="profile-btn" class="profile-avatar" type="button" aria-label="Profile menu">${sanitize(user.name[0].toUpperCase())}</button></div>`
-              : '<a href="/auth" class="btn-primary" aria-label="Sign in">Sign In</a>'}
+    ? `<div class="profile-wrap"><button id="profile-btn" class="profile-avatar" type="button" aria-label="Profile menu">${sanitize(user.name[0].toUpperCase())}</button></div>`
+    : '<a href="/auth" class="btn-primary" aria-label="Sign in">Sign In</a>'}
           </div>
         </div>
 
@@ -404,7 +403,7 @@ export default async function decorate(block) {
     if (window.innerWidth > 1024) closeMobile();
   });
   document.addEventListener('click', (event) => {
-    const target = event.target;
+    const { target } = event;
     if (!(target instanceof Element)) return;
     const profileMenu = document.getElementById('profile-menu');
     const profileBtn = document.getElementById('profile-btn');

@@ -1,9 +1,9 @@
 export const CATEGORY_LABELS = {
-  training:   'Training Shoes',
-  running:    'Running Shoes',
+  training: 'Training Shoes',
+  running: 'Running Shoes',
   multisport: 'Multisport Shoes',
-  casual:     'Casual Shoes',
-  sneakers:   'Sneakers',
+  casual: 'Casual Shoes',
+  sneakers: 'Sneakers',
 };
 
 /** @type {{ id: string, brand: string, title: string, price: number, ... }[] | null} */
@@ -63,8 +63,8 @@ export async function getProductById(id) {
  */
 export function buildFiltersMeta(products) {
   const categories = [...new Set(products.map((p) => p.category))].sort();
-  const brands     = [...new Set(products.map((p) => p.brand))].sort();
-  const prices     = products.map((p) => p.price);
+  const brands = [...new Set(products.map((p) => p.brand))].sort();
+  const prices = products.map((p) => p.price);
   return {
     categories,
     brands,
@@ -79,7 +79,7 @@ export function buildFiltersMeta(products) {
  * @param {{ categories: Set, brands: Set, maxPrice: number, gender: string, sort: string }} state
  */
 export function filterProducts(products, state) {
-  let filtered = products.filter((p) => {
+  const filtered = products.filter((p) => {
     if (state.categories.size && !state.categories.has(p.category)) return false;
     if (state.brands.size && !state.brands.has(p.brand)) return false;
     if (p.price > state.maxPrice) return false;
@@ -87,7 +87,7 @@ export function filterProducts(products, state) {
     return true;
   });
 
-  if (state.sort === 'low-high')  filtered.sort((a, b) => a.price - b.price);
+  if (state.sort === 'low-high') filtered.sort((a, b) => a.price - b.price);
   else if (state.sort === 'high-low') filtered.sort((a, b) => b.price - a.price);
   else filtered.sort((a, b) => (b.rating * b.reviews) - (a.rating * a.reviews));
 
