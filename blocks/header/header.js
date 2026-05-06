@@ -110,24 +110,27 @@ function readLinks(nodes) {
 
 function readFragmentConfig(root, defaults) {
   const config = { ...defaults };
+  const applyRow = (cells) => {
+    if (cells.length < 2) return;
+    const [labelCell, valueCell] = cells;
+    const key = camelKey(labelCell.textContent);
+    if (Object.prototype.hasOwnProperty.call(defaults, key)) {
+      config[key] = valueCell.textContent.trim();
+    }
+  };
 
   root.querySelectorAll('tr').forEach((row) => {
-    const cells = [...row.children].map((cell) => cell.textContent.trim());
-    if (cells.length < 2) return;
-    const [label, value] = cells;
-    const key = camelKey(label);
-    if (Object.prototype.hasOwnProperty.call(defaults, key)) config[key] = value;
+    applyRow([...row.children]);
   });
 
   root.querySelectorAll(':scope > div, :scope > section').forEach((section) => {
     section.querySelectorAll(':scope > div').forEach((row) => {
-      const cells = [...row.children];
-      if (cells.length < 2) return;
-      const key = camelKey(cells[0].textContent);
-      if (Object.prototype.hasOwnProperty.call(defaults, key)) {
-        config[key] = cells[1].textContent.trim();
-      }
+      applyRow([...row.children]);
     });
+  });
+
+  root.querySelectorAll('div > div').forEach((row) => {
+    applyRow([...row.children]);
   });
 
   return config;
