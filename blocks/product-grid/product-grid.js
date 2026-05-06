@@ -2,7 +2,6 @@ import { getProducts, CATEGORY_LABELS } from '../../scripts/product-store.js';
 import {
   formatCurrency, isWishlisted, toggleWishlist, toast, getWishlist,
 } from '../../scripts/cart-store.js';
-import { loadFragment } from '../fragment/fragment.js';
 
 const DEFAULT_SEARCH_SHELL = {
   inputLabel: 'Search products',
@@ -118,13 +117,15 @@ function camelKey(value) {
 function readShellConfig(fragment, defaults) {
   const config = { ...defaults };
   if (!fragment) return config;
+  const applyPair = (label, value) => {
+    const key = camelKey(label);
+    if (Object.prototype.hasOwnProperty.call(defaults, key)) {
+      config[key] = String(value || '').trim();
+    }
+  };
   const applyRow = (cells) => {
     if (cells.length < 2) return;
-    const [labelCell, valueCell] = cells;
-    const key = camelKey(labelCell.textContent);
-    if (Object.prototype.hasOwnProperty.call(defaults, key)) {
-      config[key] = valueCell.textContent.trim();
-    }
+    applyPair(cells[0].textContent, cells[1].textContent);
   };
 
   fragment.querySelectorAll('tr').forEach((row) => {
@@ -141,12 +142,23 @@ function readShellConfig(fragment, defaults) {
     applyRow([...row.children]);
   });
 
+  fragment.querySelectorAll('li').forEach((item) => {
+    const text = item.textContent.trim();
+    const separator = text.indexOf(':');
+    if (separator <= 0) return;
+    applyPair(text.slice(0, separator), text.slice(separator + 1));
+  });
+
   return config;
 }
 
 async function loadShellConfig(path, defaults) {
   try {
-    return readShellConfig(await loadFragment(path), defaults);
+    const resp = await fetch(`${path}.plain.html`);
+    if (!resp.ok) return { ...defaults };
+    const fragment = document.createElement('main');
+    fragment.innerHTML = await resp.text();
+    return readShellConfig(fragment, defaults);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.warn(`[product-grid] using fallback shell copy for ${path}`, error);

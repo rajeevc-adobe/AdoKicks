@@ -110,13 +110,15 @@ function readLinks(nodes) {
 
 function readFragmentConfig(root, defaults) {
   const config = { ...defaults };
+  const applyPair = (label, value) => {
+    const key = camelKey(label);
+    if (Object.prototype.hasOwnProperty.call(defaults, key)) {
+      config[key] = String(value || '').trim();
+    }
+  };
   const applyRow = (cells) => {
     if (cells.length < 2) return;
-    const [labelCell, valueCell] = cells;
-    const key = camelKey(labelCell.textContent);
-    if (Object.prototype.hasOwnProperty.call(defaults, key)) {
-      config[key] = valueCell.textContent.trim();
-    }
+    applyPair(cells[0].textContent, cells[1].textContent);
   };
 
   root.querySelectorAll('tr').forEach((row) => {
@@ -133,13 +135,23 @@ function readFragmentConfig(root, defaults) {
     applyRow([...row.children]);
   });
 
+  root.querySelectorAll('li').forEach((item) => {
+    const text = item.textContent.trim();
+    const separator = text.indexOf(':');
+    if (separator <= 0) return;
+    applyPair(text.slice(0, separator), text.slice(separator + 1));
+  });
+
   return config;
 }
 
 async function loadShell(path, defaults) {
   try {
-    const fragment = await loadFragment(path);
-    return fragment ? readFragmentConfig(fragment, defaults) : { ...defaults };
+    const resp = await fetch(`${path}.plain.html`);
+    if (!resp.ok) return { ...defaults };
+    const fragment = document.createElement('main');
+    fragment.innerHTML = await resp.text();
+    return readFragmentConfig(fragment, defaults);
   } catch {
     return { ...defaults };
   }
