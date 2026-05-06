@@ -1,4 +1,6 @@
-| filter shell | |
+## Filter Shell
+
+| Key | Value |
 |---|---|
 | filter toggle label | Toggle filters |
 | sort label | Sort by price |

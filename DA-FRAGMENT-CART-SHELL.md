@@ -1,4 +1,6 @@
-| cart shell | |
+## Cart Shell
+
+| Key | Value |
 |---|---|
 | title | Shopping Cart |
 | close label | Close cart drawer |

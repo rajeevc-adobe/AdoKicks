@@ -110,6 +110,7 @@ function readLinks(nodes) {
 
 function readFragmentConfig(root, defaults) {
   const config = { ...defaults };
+
   root.querySelectorAll('tr').forEach((row) => {
     const cells = [...row.children].map((cell) => cell.textContent.trim());
     if (cells.length < 2) return;
@@ -117,6 +118,18 @@ function readFragmentConfig(root, defaults) {
     const key = camelKey(label);
     if (Object.prototype.hasOwnProperty.call(defaults, key)) config[key] = value;
   });
+
+  root.querySelectorAll(':scope > div, :scope > section').forEach((section) => {
+    section.querySelectorAll(':scope > div').forEach((row) => {
+      const cells = [...row.children];
+      if (cells.length < 2) return;
+      const key = camelKey(cells[0].textContent);
+      if (Object.prototype.hasOwnProperty.call(defaults, key)) {
+        config[key] = cells[1].textContent.trim();
+      }
+    });
+  });
+
   return config;
 }
 
@@ -136,14 +149,20 @@ async function loadNavConfig() {
 
     const brandNodes = sectionAfterHeading(fragment, 'Brand');
     const brandLink = brandNodes.flatMap((node) => [...node.querySelectorAll('a[href]')])[0];
+    const navNodes = sectionAfterHeading(fragment, 'Nav');
+    const toolNodes = sectionAfterHeading(fragment, 'Tools');
+    if (!brandNodes.length || !brandLink || !navNodes.length || !toolNodes.length) return DEFAULT_NAV;
+
     const brandText = brandNodes.map((node) => node.textContent.trim()).filter(Boolean).join(' ');
     const brandLabel = brandLink?.textContent.trim() || DEFAULT_NAV.brand.label;
     const tagline = brandText
       .replace(brandLabel, '')
       .replace(/^[\s-]+/, '')
       .trim() || DEFAULT_NAV.brand.tagline;
-    const navItems = readLinks(sectionAfterHeading(fragment, 'Nav'));
-    const tools = readLinks(sectionAfterHeading(fragment, 'Tools'));
+    const navItems = readLinks(navNodes);
+    const tools = readLinks(toolNodes);
+    if (!navItems.length || !tools.length) return DEFAULT_NAV;
+
     const findTool = (name, fallback) => tools.find((link) => normalizeKey(link.label) === normalizeKey(name)) || fallback;
 
     return {

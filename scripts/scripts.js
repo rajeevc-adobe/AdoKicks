@@ -316,26 +316,25 @@ function decorateButtons(main) {
  *   1. Fragment links (/fragments/...) → replaced with fragment content
  *   2. Leading h1 + picture → hero block (if not already authored)
  */
-function buildAutoBlocks(main) {
+async function buildAutoBlocks(main) {
   try {
     const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')]
       .filter((f) => !f.closest('.fragment'));
     if (fragments.length > 0) {
       // eslint-disable-next-line import/no-cycle
-      import('../blocks/fragment/fragment.js').then(({ loadFragment }) => {
-        fragments.forEach(async (fragment) => {
-          try {
-            const { pathname } = new URL(fragment.href);
-            const frag = await loadFragment(pathname);
-            if (frag?.children?.length && fragment.parentElement) {
-              fragment.parentElement.replaceWith(...frag.children);
-            }
-          } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error('Fragment loading failed', error);
+      const { loadFragment } = await import('../blocks/fragment/fragment.js');
+      await Promise.all(fragments.map(async (fragment) => {
+        try {
+          const { pathname } = new URL(fragment.href);
+          const frag = await loadFragment(pathname);
+          if (frag?.children?.length && fragment.parentElement) {
+            fragment.parentElement.replaceWith(...frag.children);
           }
-        });
-      });
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error('Fragment loading failed', error);
+        }
+      }));
     }
     buildHeroBlock(main);
   } catch (error) {
@@ -350,9 +349,9 @@ function buildAutoBlocks(main) {
  * Exported so tests or other modules can call it directly if needed.
  */
 // eslint-disable-next-line import/prefer-default-export
-export function decorateMain(main) {
+export async function decorateMain(main) {
   decorateIcons(main);
-  buildAutoBlocks(main);
+  await buildAutoBlocks(main);
   decorateSections(main);
   decorateBlocks(main);
   decorateButtons(main);
@@ -379,7 +378,7 @@ async function loadEager(doc) {
   decorateTemplateAndTheme();
   const main = doc.querySelector('main');
   if (main) {
-    decorateMain(main);
+    await decorateMain(main);
     document.body.classList.add('appear');
     await loadSection(main.querySelector('.section'), waitForFirstImage);
   }

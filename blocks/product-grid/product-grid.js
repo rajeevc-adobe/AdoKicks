@@ -123,7 +123,7 @@ function readShellConfig(fragment, defaults) {
     if (cells.length < 2) return;
     const [label, value] = cells;
     const key = camelKey(label);
-    if (key) config[key] = value;
+    if (Object.prototype.hasOwnProperty.call(defaults, key)) config[key] = value;
   });
 
   fragment.querySelectorAll(':scope > div, :scope > section').forEach((section) => {
@@ -131,7 +131,9 @@ function readShellConfig(fragment, defaults) {
       const cells = [...row.children];
       if (cells.length < 2) return;
       const key = camelKey(cells[0].textContent);
-      if (key) config[key] = cells[1].textContent.trim();
+      if (Object.prototype.hasOwnProperty.call(defaults, key)) {
+        config[key] = cells[1].textContent.trim();
+      }
     });
   });
 
