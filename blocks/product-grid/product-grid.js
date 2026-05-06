@@ -9,6 +9,7 @@ const DEFAULT_SEARCH_SHELL = {
   placeholder: 'Search shoes, brands, categories...',
   submitLabel: 'Search',
   emptyText: 'No products match your search.',
+  pageEmptyText: 'No products found for this query.',
   promptText: 'Enter a search term to find shoes.',
 };
 
@@ -286,12 +287,12 @@ function renderSearch(block, products, shell = DEFAULT_SEARCH_SHELL) {
       </form>
       ${q
     ? `<p class="search-summary" aria-live="polite">
-             ${hits.length} result${hits.length !== 1 ? 's' : ''} for "<strong>${sanitizeText(q)}</strong>"
+             ${hits.length} result(s) for "<strong>${sanitizeText(q)}</strong>"
            </p>
            <div class="product-grid" role="list">
              ${hits.length
     ? hits.map((p) => productCard(p)).join('')
-    : `<p class="no-results">${sanitizeText(shell.emptyText)}</p>`}
+    : `<p class="no-results">${sanitizeText(shell.pageEmptyText)}</p>`}
            </div>`
     : `<p class="search-prompt">${sanitizeText(shell.promptText)}</p>`
 }
