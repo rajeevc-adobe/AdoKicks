@@ -5,6 +5,7 @@
 .trending-wrap {
   background: linear-gradient(135deg, #1f1f1f 0%, #2d2d2d 50%, #dc2626 100%);
   border-color: #dc2626;
+  overflow: hidden;
 }
 .trending-wrap .trending-head h2 { color: #ffffff; }
 .trending-wrap .trending-head p  { color: #e5e5e5; }
@@ -22,6 +23,8 @@
 .trending-wrap .product-grid,
 .trending-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+  min-width: 0;
 }
 
 /* Product card (shared with all grids) */
@@ -33,13 +36,33 @@
 }
 
 /* Wrapper should NOT be a grid */
+.product-grid.block,
 .product-grid.mens,
 .product-grid.womens,
 .product-grid.categories,
 .product-grid.featured,
 .product-grid.wishlist {
   display: block;
+  grid-template-columns: none;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.product-grid.block {
+  margin-top: 1.25rem;
+}
+
+.product-grid.mens,
+.product-grid.womens,
+.product-grid.categories,
+.product-grid.featured,
+.product-grid.wishlist {
   margin-top: 0;
+}
+
+.product-grid.block > .section-card {
+  width: 100%;
 }
 
 body[data-page='wishlist'] main {
