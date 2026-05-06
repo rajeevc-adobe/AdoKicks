@@ -1,6 +1,3 @@
-# Categories Page DA Authoring
-
-```md
 | product-grid(categories) | |
 |---|---|
 | variation | categories |
@@ -12,7 +9,6 @@
 
 | Metadata | |
 |---|---|
-| title | Adokicks | Categories |
-| description | Browse Adokicks shoes by category across men's and women's running, training, casual, multisport and sneaker collections. |
-| og:image | /media/banner/categories.png |
-```
+| title | Adokicks \| Categories |
+| description | Browse Adokicks shoe categories for running, training, casual, multisport, and sneaker styles. |
+| og:image | /icons/adokicks.png |

@@ -1,5 +1,3 @@
----
-
 | checkout | |
 |---|---|
 | variation | default |
@@ -15,5 +13,4 @@
 |---|---|
 | title | Adokicks \| Checkout |
 | description | Checkout your Adokicks cart. |
-| og:image | /adokicks.png |
-
+| og:image | /icons/adokicks.png |

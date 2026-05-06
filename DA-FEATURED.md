@@ -1,19 +1,15 @@
-# Featured Page DA Authoring
-
-```md
 | product-grid(featured) | |
 |---|---|
 | variation | featured |
 | title | Featured Premium Picks |
-| subtitle | Discover our curated collection of the finest athletic footwear |
+| subtitle | Discover our curated collection of the finest athletic footwear. |
 | limit | 12 |
-| ids | m-tr-001,m-ca-001 |
+| ids | m-tr-001,m-ca-001,w-ru-001,w-sn-001 |
 
 ---
 
 | Metadata | |
 |---|---|
-| title | Adokicks | Featured |
-| description | Featured premium shoe picks from Adokicks. |
-| og:image | /media/banner/featured.png |
-```
+| title | Adokicks \| Featured |
+| description | Explore featured premium shoes from Adokicks. |
+| og:image | /icons/adokicks.png |

@@ -2,13 +2,25 @@ export default function decorate(block) {
   const rows = [...block.children];
 
   // Determine if this is gender banners or regular banners
-  if (block.classList.contains('gender')) {
+  if (block.classList.contains('men') || block.classList.contains('mens')) {
+    decorateSingleBanner(block, rows, 'men-banner');
+  } else if (block.classList.contains('women') || block.classList.contains('womens')) {
+    decorateSingleBanner(block, rows, 'women-banner');
+  } else if (block.classList.contains('gender')) {
     decorateGenderBanners(block, rows);
   } else {
     const isFull = block.classList.contains('full');
     if (isFull) decorateFull(block, rows);
     else decorateSplit(block, rows);
   }
+}
+
+function decorateSingleBanner(block, rows, cardClass) {
+  const data = parsePair(rows, 0);
+  block.innerHTML = `
+    <div class="banner-full single-gender-banner">
+      ${bannerCard(data, cardClass)}
+    </div>`;
 }
 
 function getPageContext() {

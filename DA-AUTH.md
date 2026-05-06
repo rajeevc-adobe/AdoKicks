@@ -1,5 +1,3 @@
----
-
 | auth | |
 |---|---|
 | variation | default |
@@ -16,4 +14,4 @@
 |---|---|
 | title | Adokicks \| Sign In |
 | description | Sign in or sign up to Adokicks. |
-| og:image | /adokicks.png |
+| og:image | /icons/adokicks.png |

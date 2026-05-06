@@ -2,6 +2,42 @@ import { getProducts, CATEGORY_LABELS } from '../../scripts/product-store.js';
 import {
   formatCurrency, isWishlisted, toggleWishlist, toast, getWishlist,
 } from '../../scripts/cart-store.js';
+import { loadFragment } from '../fragment/fragment.js';
+
+const DEFAULT_SEARCH_SHELL = {
+  inputLabel: 'Search products',
+  placeholder: 'Search shoes, brands, categories...',
+  submitLabel: 'Search',
+  emptyText: 'No products match your search.',
+  promptText: 'Enter a search term to find shoes.',
+};
+
+const DEFAULT_FILTER_SHELL = {
+  filterToggleLabel: 'Toggle filters',
+  sortLabel: 'Sort by price',
+  sortMenuLabel: 'Sort products by price',
+  lowHighLabel: 'Low to High',
+  highLowLabel: 'High to Low',
+  title: 'Filter & Sort',
+  resetLabel: 'Reset',
+  closeLabel: 'Close',
+  priceLabel: 'Price Range',
+  minAmountLabel: 'Minimum amount',
+  maxAmountLabel: 'Maximum amount',
+  genderLabel: 'Gender',
+  categoryLabel: 'Categories',
+  sizeLabel: 'Sizes',
+  brandLabel: 'Brands',
+  allLabel: 'All',
+  allCategoriesLabel: 'All Categories',
+  allSizesLabel: 'All Sizes',
+  allBrandsLabel: 'All Brands',
+  mensLabel: 'Mens',
+  womensLabel: 'Womens',
+  mobileKicker: 'Refine results',
+  mobileTitle: 'Filters',
+  noResultsText: 'No products match your filters.',
+};
 
 export default async function decorate(block) {
   // Read DA option rows (key | value)
@@ -20,10 +56,14 @@ export default async function decorate(block) {
     if (variation === 'wishlist') { await renderWishlist(block, opts); return; }
     const products = await getProducts();
     if (variation === 'categories') { renderCategories(block, products, opts); return; }
-    if (variation === 'catalog') renderCatalog(block, products, { ...opts, gender: inferredGender });
-    else if (variation === 'featured') renderFeatured(block, products, opts);
-    else if (variation === 'search') renderSearch(block, products);
-    else renderTrending(block, products, opts);
+    if (variation === 'catalog') {
+      const filterShell = await loadShellConfig('/fragments/filter-shell', DEFAULT_FILTER_SHELL);
+      renderCatalog(block, products, { ...opts, gender: inferredGender }, filterShell);
+    } else if (variation === 'featured') renderFeatured(block, products, opts);
+    else if (variation === 'search') {
+      const searchShell = await loadShellConfig('/fragments/search-shell', DEFAULT_SEARCH_SHELL);
+      renderSearch(block, products, searchShell);
+    } else renderTrending(block, products, opts);
   } catch (err) {
     block.innerHTML = '<p class="pg-error">Unable to load products. Please refresh.</p>';
     // eslint-disable-next-line no-console
@@ -61,7 +101,51 @@ function getBlockVariationClass(block) {
     if (['men', 'mens', 'women', 'womens'].includes(authoredVariation)) return 'catalog';
   }
 
+  const normalizedTexts = variationTexts.map((text) => text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim());
+  if (normalizedTexts.includes('product grid search')) return 'search';
+
   return null;
+}
+
+function camelKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+([a-z0-9])/g, (_, char) => char.toUpperCase());
+}
+
+function readShellConfig(fragment, defaults) {
+  const config = { ...defaults };
+  if (!fragment) return config;
+
+  fragment.querySelectorAll('tr').forEach((row) => {
+    const cells = [...row.children].map((cell) => cell.textContent.trim());
+    if (cells.length < 2) return;
+    const [label, value] = cells;
+    const key = camelKey(label);
+    if (key) config[key] = value;
+  });
+
+  fragment.querySelectorAll(':scope > div, :scope > section').forEach((section) => {
+    section.querySelectorAll(':scope > div').forEach((row) => {
+      const cells = [...row.children];
+      if (cells.length < 2) return;
+      const key = camelKey(cells[0].textContent);
+      if (key) config[key] = cells[1].textContent.trim();
+    });
+  });
+
+  return config;
+}
+
+async function loadShellConfig(path, defaults) {
+  try {
+    return readShellConfig(await loadFragment(path), defaults);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn(`[product-grid] using fallback shell copy for ${path}`, error);
+    return { ...defaults };
+  }
 }
 
 function getPageVariation() {
@@ -184,27 +268,27 @@ function renderFeatured(block, products, opts) {
     </section>`;
 }
 
-function renderSearch(block, products) {
+function renderSearch(block, products, shell = DEFAULT_SEARCH_SHELL) {
   const q = new URLSearchParams(window.location.search).get('q')?.toLowerCase().trim() || '';
   const hits = q ? products.filter((p) => `${p.title} ${p.brand} ${p.category}`.toLowerCase().includes(q)) : [];
 
   block.innerHTML = `
     <div class="search-page">
       <form class="search-form" role="search" aria-label="Product search">
-        <input type="search" name="q" class="search-input" value="${q}"
-          placeholder="Search shoes, brands, categories…" aria-label="Search products" autocomplete="off">
-        <button type="submit" class="button primary">Search</button>
+        <input type="search" name="q" class="search-input" value="${sanitizeText(q)}"
+          placeholder="${sanitizeText(shell.placeholder)}" aria-label="${sanitizeText(shell.inputLabel)}" autocomplete="off">
+        <button type="submit" class="button primary">${sanitizeText(shell.submitLabel)}</button>
       </form>
       ${q
     ? `<p class="search-summary" aria-live="polite">
-             ${hits.length} result${hits.length !== 1 ? 's' : ''} for "<strong>${q}</strong>"
+             ${hits.length} result${hits.length !== 1 ? 's' : ''} for "<strong>${sanitizeText(q)}</strong>"
            </p>
            <div class="product-grid" role="list">
              ${hits.length
     ? hits.map((p) => productCard(p)).join('')
-    : '<p class="no-results">No products match your search.</p>'}
+    : `<p class="no-results">${sanitizeText(shell.emptyText)}</p>`}
            </div>`
-    : '<p class="search-prompt">Enter a search term to find shoes.</p>'
+    : `<p class="search-prompt">${sanitizeText(shell.promptText)}</p>`
 }
     </div>`;
 
@@ -221,9 +305,9 @@ async function renderWishlistLegacy(block) {
   if (!wishlist.length) {
     block.innerHTML = `
       <div class="wishlist-empty">
-        <div class="wishlist-empty-icon">♡</div>
+        <div class="wishlist-empty-icon">&#9825;</div>
         <h2>Your wishlist is empty</h2>
-        <p>Browse our collections and hit ♡ on any shoe to save it here.</p>
+        <p>Browse our collections and hit &#9825; on any shoe to save it here.</p>
         <a href="/categories" class="button primary">Start Browsing</a>
       </div>`;
     return;
@@ -250,7 +334,17 @@ async function renderWishlist(block, opts = {}) {
   document.body.dataset.page = 'wishlist';
 
   if (!wishlist.length) {
-    block.innerHTML = '<p>Your wishlist is empty.</p>';
+    const title = opts.emptytitle || opts.title || 'Your wishlist is empty';
+    const text = opts.emptytext || opts.subtitle || 'Browse our collections and hit the heart on any shoe to save it here.';
+    const ctaLabel = opts.cta || opts.ctalabel || 'Start Browsing';
+    const ctaHref = opts.href || '/categories';
+    block.innerHTML = `
+      <div class="wishlist-empty">
+        <div class="wishlist-empty-icon">&#9825;</div>
+        <h2>${sanitizeText(title)}</h2>
+        <p>${sanitizeText(text)}</p>
+        <a href="${sanitizeText(ctaHref)}" class="button primary">${sanitizeText(ctaLabel)}</a>
+      </div>`;
     return;
   }
 
@@ -379,7 +473,7 @@ function categoryCard(card) {
   `;
 }
 
-function renderCatalog(block, products, opts) {
+function renderCatalog(block, products, opts, filterShell = DEFAULT_FILTER_SHELL) {
   const genderPre = (opts.gender || (block.classList.contains('mens') ? 'mens' : block.classList.contains('womens') ? 'womens' : null) || '').toLowerCase() || null;
   const pool = genderPre ? products.filter((p) => p.gender === genderPre) : products;
   const includeGender = !genderPre;
@@ -396,7 +490,7 @@ function renderCatalog(block, products, opts) {
   `;
 
   // Render the full catalog page with advanced filters
-  renderCatalogPage(pool, includeGender, genderPre);
+  renderCatalogPage(pool, includeGender, genderPre, filterShell);
 }
 
 // ===== Advanced Filter Functions from Reference =====
@@ -470,7 +564,7 @@ function getCatalogDefaults(filtersMeta, includeGender, forcedGender) {
   };
 }
 
-function buildTitleRow(gridSection) {
+function buildTitleRow(gridSection, shell = DEFAULT_FILTER_SHELL) {
   const heading = gridSection.querySelector('h1');
   if (!heading || gridSection.querySelector('.catalog-title-row')) return;
 
@@ -481,7 +575,7 @@ function buildTitleRow(gridSection) {
   toggleBtn.id = 'catalog-filter-toggle';
   toggleBtn.type = 'button';
   toggleBtn.className = 'catalog-filter-toggle';
-  toggleBtn.setAttribute('aria-label', 'Toggle filters');
+  toggleBtn.setAttribute('aria-label', shell.filterToggleLabel);
   toggleBtn.setAttribute('aria-controls', 'filter-panel');
   toggleBtn.setAttribute('aria-expanded', 'false');
   toggleBtn.innerHTML = '<img src="assests/icons/filter-svgrepo-com.svg" alt="" aria-hidden="true">';
@@ -496,7 +590,7 @@ function buildTitleRow(gridSection) {
   sortBtn.id = 'catalog-sort-toggle';
   sortBtn.type = 'button';
   sortBtn.className = 'catalog-sort-toggle';
-  sortBtn.setAttribute('aria-label', 'Sort by price');
+  sortBtn.setAttribute('aria-label', shell.sortLabel);
   sortBtn.setAttribute('aria-expanded', 'false');
   sortBtn.setAttribute('aria-controls', 'catalog-sort-menu');
   sortBtn.innerHTML = `
@@ -509,10 +603,10 @@ function buildTitleRow(gridSection) {
   sortMenu.id = 'catalog-sort-menu';
   sortMenu.className = 'catalog-sort-menu hidden';
   sortMenu.setAttribute('role', 'menu');
-  sortMenu.setAttribute('aria-label', 'Sort products by price');
+  sortMenu.setAttribute('aria-label', shell.sortMenuLabel);
   sortMenu.innerHTML = `
-    <button type="button" class="catalog-sort-option" data-sort-option="low-high" role="menuitemradio" aria-checked="false">Low to High</button>
-    <button type="button" class="catalog-sort-option" data-sort-option="high-low" role="menuitemradio" aria-checked="false">High to Low</button>
+    <button type="button" class="catalog-sort-option" data-sort-option="low-high" role="menuitemradio" aria-checked="false">${sanitizeText(shell.lowHighLabel)}</button>
+    <button type="button" class="catalog-sort-option" data-sort-option="high-low" role="menuitemradio" aria-checked="false">${sanitizeText(shell.highLowLabel)}</button>
   `;
 
   sortWrap.appendChild(sortBtn);
@@ -547,18 +641,18 @@ function buildMobileDropdownGroup(groupName, label, options, allLabel) {
   `;
 }
 
-function renderPriceRange(filtersMeta, selected, suffix = '') {
+function renderPriceRange(filtersMeta, selected, suffix = '', shell = DEFAULT_FILTER_SHELL) {
   const id = suffix ? `-${suffix}` : '';
   return `
     <div class="price-range-stack">
       <div class="price-range-input-row">
         <div class="price-range-control">
-          <label for="min-price${id}">Minimum amount</label>
-          <input id="min-price${id}" type="number" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.minPrice}" aria-label="Minimum price amount">
+          <label for="min-price${id}">${sanitizeText(shell.minAmountLabel)}</label>
+          <input id="min-price${id}" type="number" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.minPrice}" aria-label="${sanitizeText(shell.minAmountLabel)}">
         </div>
         <div class="price-range-control">
-          <label for="max-price${id}">Maximum amount</label>
-          <input id="max-price${id}" type="number" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.maxPrice}" aria-label="Maximum price amount">
+          <label for="max-price${id}">${sanitizeText(shell.maxAmountLabel)}</label>
+          <input id="max-price${id}" type="number" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.maxPrice}" aria-label="${sanitizeText(shell.maxAmountLabel)}">
         </div>
       </div>
       <div class="price-range-dual" data-price-range>
@@ -681,7 +775,7 @@ function syncFilterControls(panel, filtersMeta, selected, sortMenu) {
   });
 }
 
-function renderFiltered(products, selected, grid) {
+function renderFiltered(products, selected, grid, shell = DEFAULT_FILTER_SHELL) {
   let filtered = products.filter(
     (p) => p.price >= selected.minPrice && p.price <= selected.maxPrice,
   );
@@ -705,17 +799,17 @@ function renderFiltered(products, selected, grid) {
 
   grid.innerHTML = filtered.length
     ? filtered.map((p) => productCard(p)).join('')
-    : '<p>No products match your filters.</p>';
+    : `<p>${sanitizeText(shell.noResultsText)}</p>`;
 }
 
-function renderCatalogPage(products, includeGender = false, forcedGender = null) {
+function renderCatalogPage(products, includeGender = false, forcedGender = null, shell = DEFAULT_FILTER_SHELL) {
   const panel = document.getElementById('filter-panel');
   const grid = document.getElementById('product-grid');
   const gridSection = document.getElementById('product-grid-section');
   if (!panel || !grid || !gridSection) return;
 
   // 1. Build title row
-  buildTitleRow(gridSection);
+  buildTitleRow(gridSection, shell);
 
   // 2. Derive filter meta + defaults from URL params
   const filtersMeta = buildCatalogFilters(products, includeGender);
@@ -732,28 +826,28 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null)
 
   const mobileCategoryGroup = buildMobileDropdownGroup(
     'category',
-    'Categories',
+    shell.categoryLabel,
     filtersMeta.categories.map((c) => ({ value: c, label: CATEGORY_LABELS_MAP[c] || c })),
-    'All Categories',
+    shell.allCategoriesLabel,
   );
   const mobileSizeGroup = buildMobileDropdownGroup(
     'size',
-    'Sizes',
+    shell.sizeLabel,
     filtersMeta.sizes.map((s) => ({ value: String(s), label: String(s) })),
-    'All Sizes',
+    shell.allSizesLabel,
   );
   const mobileBrandGroup = buildMobileDropdownGroup(
     'brand',
-    'Brands',
+    shell.brandLabel,
     filtersMeta.brands.map((b) => ({ value: b, label: b })),
-    'All Brands',
+    shell.allBrandsLabel,
   );
   const mobileGenderGroup = includeGender
     ? buildMobileDropdownGroup(
       'gender',
-      'Gender',
-      [{ value: 'mens', label: 'Mens' }, { value: 'womens', label: 'Womens' }],
-      'All',
+      shell.genderLabel,
+      [{ value: 'mens', label: shell.mensLabel }, { value: 'womens', label: shell.womensLabel }],
+      shell.allLabel,
     )
     : '';
 
@@ -761,34 +855,34 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null)
   panel.innerHTML = `
     <form id="catalog-filter-form" class="filter-desktop-form" aria-label="Product filters">
       <div class="filter-panel-head">
-        <h2>Filter & Sort</h2>
+        <h2>${sanitizeText(shell.title)}</h2>
         <div class="filter-panel-head-actions">
-          <button id="reset-filters" class="btn-outline filter-reset-btn" type="button" data-filter-reset aria-label="Reset filters">Reset</button>
-          <button id="close-filters-desktop" class="btn-outline filter-close-btn" type="button" aria-label="Close filters">Close</button>
+          <button id="reset-filters" class="btn-outline filter-reset-btn" type="button" data-filter-reset aria-label="${sanitizeText(shell.resetLabel)}">${sanitizeText(shell.resetLabel)}</button>
+          <button id="close-filters-desktop" class="btn-outline filter-close-btn" type="button" aria-label="${sanitizeText(shell.closeLabel)}">${sanitizeText(shell.closeLabel)}</button>
         </div>
       </div>
-      <div class="filter-group filter-group-range"><h3>Price Range</h3>${renderPriceRange(filtersMeta, selected)}</div>
-      ${includeGender ? '<div class="filter-group"><h3>Gender</h3><div class="checkbox-list filter-options-inline"><label class="filter-chip"><input type="radio" name="gender" value="all" checked><span>All</span></label><label class="filter-chip"><input type="radio" name="gender" value="mens"><span>Mens</span></label><label class="filter-chip"><input type="radio" name="gender" value="womens"><span>Womens</span></label></div></div>' : ''}
-      <div class="filter-group"><h3>Categories</h3><div class="checkbox-list filter-options-grid">
+      <div class="filter-group filter-group-range"><h3>${sanitizeText(shell.priceLabel)}</h3>${renderPriceRange(filtersMeta, selected, '', shell)}</div>
+      ${includeGender ? `<div class="filter-group"><h3>${sanitizeText(shell.genderLabel)}</h3><div class="checkbox-list filter-options-inline"><label class="filter-chip"><input type="radio" name="gender" value="all" checked><span>${sanitizeText(shell.allLabel)}</span></label><label class="filter-chip"><input type="radio" name="gender" value="mens"><span>${sanitizeText(shell.mensLabel)}</span></label><label class="filter-chip"><input type="radio" name="gender" value="womens"><span>${sanitizeText(shell.womensLabel)}</span></label></div></div>` : ''}
+      <div class="filter-group"><h3>${sanitizeText(shell.categoryLabel)}</h3><div class="checkbox-list filter-options-grid">
         ${filtersMeta.categories.map((c) => `<label class="filter-chip"><input type="checkbox" name="category" value="${sanitizeText(c)}"><span>${sanitizeText(CATEGORY_LABELS_MAP[c] || c)}</span></label>`).join('')}
       </div></div>
-      <div class="filter-group"><h3>Sizes</h3><div class="checkbox-list filter-options-grid">
+      <div class="filter-group"><h3>${sanitizeText(shell.sizeLabel)}</h3><div class="checkbox-list filter-options-grid">
         ${filtersMeta.sizes.map((s) => `<label class="filter-chip"><input type="checkbox" name="size" value="${sanitizeText(s)}"><span>${sanitizeText(s)}</span></label>`).join('')}
       </div></div>
-      <div class="filter-group"><h3>Brands</h3><div class="checkbox-list filter-options-grid">
+      <div class="filter-group"><h3>${sanitizeText(shell.brandLabel)}</h3><div class="checkbox-list filter-options-grid">
         ${filtersMeta.brands.map((b) => `<label class="filter-chip"><input type="checkbox" name="brand" value="${sanitizeText(b)}"><span>${sanitizeText(b)}</span></label>`).join('')}
       </div></div>
     </form>
 
     <form id="catalog-filter-mobile" class="filter-mobile-form" aria-label="Product filters for smaller screens">
       <div class="filter-mobile-bar">
-        <div><p class="filter-mobile-kicker">Refine results</p><h2>Filters</h2></div>
+        <div><p class="filter-mobile-kicker">${sanitizeText(shell.mobileKicker)}</p><h2>${sanitizeText(shell.mobileTitle)}</h2></div>
         <div class="filter-mobile-actions">
-          <button id="reset-filters-mobile" class="btn-outline filter-reset-btn" type="button" data-filter-reset aria-label="Reset filters">Reset</button>
-          <button id="close-filters-mobile" class="btn-outline filter-close-btn" type="button" aria-label="Close filters">Close</button>
+          <button id="reset-filters-mobile" class="btn-outline filter-reset-btn" type="button" data-filter-reset aria-label="${sanitizeText(shell.resetLabel)}">${sanitizeText(shell.resetLabel)}</button>
+          <button id="close-filters-mobile" class="btn-outline filter-close-btn" type="button" aria-label="${sanitizeText(shell.closeLabel)}">${sanitizeText(shell.closeLabel)}</button>
         </div>
       </div>
-      <div class="filter-group filter-group-range"><h3>Price Range</h3>${renderPriceRange(filtersMeta, selected, 'mobile')}</div>
+      <div class="filter-group filter-group-range"><h3>${sanitizeText(shell.priceLabel)}</h3>${renderPriceRange(filtersMeta, selected, 'mobile', shell)}</div>
       ${mobileGenderGroup}
       ${mobileCategoryGroup}
       ${mobileSizeGroup}
@@ -922,7 +1016,7 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null)
   // 6. Render function
   function doRender() {
     syncFilterControls(panel, filtersMeta, selected, sortMenu);
-    renderFiltered(products, selected, grid);
+    renderFiltered(products, selected, grid, shell);
   }
 
   doRender(); // initial render
