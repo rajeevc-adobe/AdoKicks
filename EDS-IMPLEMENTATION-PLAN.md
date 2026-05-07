@@ -26,7 +26,7 @@ The main cleanup goals are:
 - Search popup labels, cart drawer labels, and filter panel labels were hardcoded in JS.
 - Some DA examples used migration-friendly or backup-style authoring instead of final EDS contracts.
 - Some block variations relied on path guessing or text inspection.
-- `product-grid` carries many responsibilities, so its authoring contract needs to be explicit.
+- `product-grid` carried category landing-page responsibilities that are better handled by authored cards.
 - `scripts/aem.js` should be treated as boilerplate core and not receive project-specific changes.
 
 ## Target Architecture
@@ -42,7 +42,7 @@ The main cleanup goals are:
 
 - Home `/`: `hero`, `product-grid`, `banner(men)`, `banner(women)`, `cards(composed)`, `benefits`, metadata.
 - Mens/Womens: `product-grid(mens/womens)` with `variation | catalog` and `gender`.
-- Categories: `product-grid(categories)`, generated from `shoesrc.json`.
+- Categories: `cards(category)` with authored category cards linking to filtered mens/womens catalog pages.
 - Featured: `product-grid(featured)` with `limit` and `ids`; desktop stays four products per row.
 - About: `cards(about-hero)`, `cards(metrics)`, `cards(values)`, `cards(timeline)`.
 - Wishlist: `product-grid(wishlist)` with authored empty state.
@@ -108,3 +108,4 @@ Behavior checks:
 - Wishlist-to-cart removal still works.
 - Product detail loads by query ID.
 - Home renders hero, trending, men banner, women banner, composed cards, and benefits.
+- Categories renders authored `cards(category)` cards and routes each card to `/mens?category=...` or `/womens?category=...`.

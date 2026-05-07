@@ -1,4 +1,7 @@
-export default function decorate(block) {
+import { getProducts } from '../../scripts/product-store.js';
+import { formatCurrency } from '../../scripts/cart-store.js';
+
+export default async function decorate(block) {
   const opts = readOpts(block);
   const variation = getCardsVariation(block, opts);
   if (variation) block.classList.add(variation);
@@ -8,7 +11,7 @@ export default function decorate(block) {
   if (variation === 'metrics') { decorateMetrics(block); return; }
   if (variation === 'values') { decorateValues(block, opts); return; }
   if (variation === 'timeline') { decorateTimeline(block); return; }
-  if (variation === 'categories') { decorateCategories(block); return; }
+  if (variation === 'category' || variation === 'categories') { await decorateCategory(block, opts); return; }
   decorateDefault(block);
 }
 
@@ -24,7 +27,7 @@ function readOpts(block) {
 }
 
 function getCardsVariation(block, opts) {
-  const knownVariations = ['about-hero', 'about-strip', 'categories', 'composed', 'metrics', 'timeline', 'values'];
+  const knownVariations = ['about-hero', 'about-strip', 'category', 'categories', 'composed', 'metrics', 'timeline', 'values'];
   const authored = (opts.variation || '').toLowerCase();
   if (knownVariations.includes(authored)) return authored;
 
@@ -79,6 +82,15 @@ function imageAltFromCell(cell, fallbackAlt = '') {
   return fallbackAlt;
 }
 
+function sanitizeText(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function decorateComposed(block) {
   const rows = contentRows(block);
   const headingCells = rows[0] ? [...rows[0].children] : [];
@@ -131,35 +143,99 @@ function decorateDefault(block) {
     </div>`;
 }
 
-function decorateCategories(block) {
-  // Each category = 1 row: [img] | [title link] | [collection] | [category] | [description]
-  const rows = contentRows(block);
-  block.innerHTML = `
-    <div class="categories-grid">
-      ${rows.map((row) => {
+async function decorateCategory(block, opts = {}) {
+  // Each card row: [img] | [title link] | [collection] | [category] | [description]
+  const configKeys = new Set(['eyebrow', 'title', 'subtitle']);
+  const rows = contentRows(block).filter((row) => {
+    const key = [...row.children][0]?.textContent?.trim().toLowerCase();
+    return !configKeys.has(key);
+  });
+  const products = await getProducts().catch(() => []);
+  const cards = rows.map((row) => {
     const cells = [...row.children];
-    const imgMarkup = imageMarkup(cells[0], cells[1]?.textContent?.trim() || '');
     const link = cells[1]?.querySelector('a');
     const title = link?.textContent?.trim() || cells[1]?.textContent?.trim() || '';
-    const href = link?.href || '#';
+    const href = link?.getAttribute('href') || '#';
     const collection = cells[2]?.textContent?.trim() || '';
     const category = cells[3]?.textContent?.trim() || '';
-    const desc = cells[4]?.textContent?.trim() || '';
-    return `
-          <article class="category-card">
-            <a href="${href}" class="category-card-img-link" aria-label="${title}">
-              ${imgMarkup}
-              <span class="category-card-badge">${category}</span>
-            </a>
-            <div class="category-card-body">
-              <p class="category-card-kicker">${collection}</p>
-              <h3><a href="${href}">${title}</a></h3>
-              ${desc ? `<p class="category-card-desc">${desc}</p>` : ''}
-              <a href="${href}" class="button secondary">Explore</a>
-            </div>
-          </article>`;
-  }).join('')}
-    </div>`;
+    const categorySlug = href.match(/[?&]category=([^&]+)/)?.[1] || category.toLowerCase().split(' ')[0];
+    const genderSlug = href.includes('/womens') ? 'womens' : 'mens';
+    const matches = products
+      .filter((product) => product.gender === genderSlug && product.category === categorySlug)
+      .sort((a, b) => (b.rating || 0) * (b.reviews || 0) - (a.rating || 0) * (a.reviews || 0));
+    const heroProduct = matches[0];
+    const desc = cells[4]?.textContent?.trim()
+      || (matches.length && heroProduct ? `${matches.length} style${matches.length === 1 ? '' : 's'} ready to browse from ${heroProduct.brand}.` : '');
+    const img = imageSrcFromCell(cells[0]);
+    const alt = imageAltFromCell(cells[0], title);
+    const collectionSlug = genderSlug === 'womens' ? 'women' : 'men';
+    return {
+      alt,
+      category,
+      collection,
+      collectionSlug,
+      desc,
+      href,
+      img,
+      price: heroProduct?.price,
+      title,
+    };
+  }).filter((card) => card.title && card.href);
+
+  const eyebrow = opts.eyebrow || 'Category atlas';
+  const title = opts.title || 'Choose the edit that matches your pace.';
+  const subtitle = opts.subtitle || 'Browse the core category collections directly, with each tile tuned to feel broad, balanced, and easy to scan.';
+  const categoryCount = new Set(cards.map((card) => card.category)).size;
+  const collectionCount = new Set(cards.map((card) => card.collection)).size;
+  block.classList.add('category');
+  document.body.dataset.page = 'categories';
+
+  block.innerHTML = `
+    <div class="categories-page">
+      <section class="page-hero categories-hero" aria-label="Category landing introduction">
+        <div class="categories-hero-copy">
+          <p class="eyebrow">${sanitizeText(eyebrow)}</p>
+          <h1>${sanitizeText(title)}</h1>
+          <p class="page-subtitle">${sanitizeText(subtitle)}</p>
+        </div>
+        <div class="categories-hero-stats" aria-label="Category overview">
+          <article class="categories-hero-stat">
+            <span class="stat-label">Collections</span>
+            <strong>${cards.length}</strong>
+          </article>
+          <article class="categories-hero-stat">
+            <span class="stat-label">Styles</span>
+            <strong>${categoryCount}</strong>
+          </article>
+          <article class="categories-hero-stat">
+            <span class="stat-label">Genders</span>
+            <strong>${collectionCount}</strong>
+          </article>
+        </div>
+      </section>
+      <section class="category-showcase" aria-label="Browse categories by gender">
+        <div id="category-grid" class="category-grid" role="list" aria-label="Category destinations">
+          ${cards.map((card) => `
+            <a class="category-card category-card-${sanitizeText(card.collectionSlug)}"
+              href="${sanitizeText(card.href)}"
+              role="listitem"
+              aria-label="Open ${sanitizeText(card.title)}">
+              ${card.img ? `<img src="${sanitizeText(card.img)}" alt="${sanitizeText(card.alt)}" class="category-card-image" loading="lazy">` : ''}
+              <div class="category-card-overlay"></div>
+              <div class="category-card-content">
+                <p class="category-card-kicker">${sanitizeText(card.collection)}</p>
+                <h2>${sanitizeText(card.title)}</h2>
+                ${card.desc ? `<p class="category-card-copy">${sanitizeText(card.desc)}</p>` : ''}
+                <div class="category-card-meta">
+                  <span class="category-card-pill">${sanitizeText(card.category)}</span>
+                  ${card.price ? `<span class="category-card-pill">From ${sanitizeText(formatCurrency(card.price))}</span>` : '<span class="category-card-pill">Explore</span>'}
+                </div>
+              </div>
+            </a>`).join('')}
+        </div>
+      </section>
+    </div>
+  `;
 }
 
 function decorateAboutStrip(block) {

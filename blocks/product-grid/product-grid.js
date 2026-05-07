@@ -55,7 +55,6 @@ export default async function decorate(block) {
   try {
     if (variation === 'wishlist') { await renderWishlist(block, opts); return; }
     const products = await getProducts();
-    if (variation === 'categories') { renderCategories(block, products, opts); return; }
     if (variation === 'catalog') {
       const filterShell = await loadShellConfig('/fragments/filter-shell', DEFAULT_FILTER_SHELL);
       renderCatalog(block, products, { ...opts, gender: inferredGender }, filterShell);
@@ -82,7 +81,7 @@ export default async function decorate(block) {
 }
 
 function getBlockVariationClass(block) {
-  const knownVariations = ['catalog', 'categories', 'featured', 'search', 'wishlist', 'trending'];
+  const knownVariations = ['catalog', 'featured', 'search', 'wishlist', 'trending'];
   const classVariation = knownVariations.find((name) => block.classList.contains(name));
   if (classVariation) return classVariation;
 
@@ -168,7 +167,6 @@ async function loadShellConfig(path, defaults) {
 
 function getPageVariation() {
   const path = window.location.pathname.toLowerCase();
-  if (path === '/categories' || path === '/categories.html' || path.endsWith('/categories')) return 'categories';
   if (path === '/featured' || path === '/featured.html' || path.endsWith('/featured')) return 'featured';
   if (path === '/wishlist' || path === '/wishlist.html' || path.endsWith('/wishlist')) return 'wishlist';
   return null;
@@ -392,103 +390,6 @@ async function renderWishlist(block, opts = {}) {
       }
     });
   }
-}
-
-function renderCategories(block, products, opts = {}) {
-  const cards = buildCategoryLandingCards(products);
-  const categoryCount = new Set(cards.map((card) => card.category)).size;
-  const genderCount = new Set(cards.map((card) => card.gender.value)).size;
-  block.classList.add('categories');
-  document.body.dataset.page = 'categories';
-
-  const eyebrow = opts.eyebrow || 'Category atlas';
-  const title = opts.title || 'Choose the edit that matches your pace.';
-  const subtitle = opts.subtitle || 'Browse the core category collections directly, with each tile tuned to feel broad, balanced, and easy to scan.';
-
-  block.innerHTML = `
-    <div class="categories-page">
-      <section class="page-hero categories-hero" aria-label="Category landing introduction">
-        <div class="categories-hero-copy">
-          <p class="eyebrow">${sanitizeText(eyebrow)}</p>
-          <h1>${sanitizeText(title)}</h1>
-          <p class="page-subtitle">${sanitizeText(subtitle)}</p>
-        </div>
-        <div class="categories-hero-stats" aria-label="Category overview">
-          <article class="categories-hero-stat">
-            <span class="stat-label">Collections</span>
-            <strong>${cards.length}</strong>
-          </article>
-          <article class="categories-hero-stat">
-            <span class="stat-label">Styles</span>
-            <strong>${categoryCount}</strong>
-          </article>
-          <article class="categories-hero-stat">
-            <span class="stat-label">Genders</span>
-            <strong>${genderCount}</strong>
-          </article>
-        </div>
-      </section>
-      <section class="category-showcase" aria-label="Browse categories by gender">
-        <div id="category-grid" class="category-grid" role="list" aria-label="Category destinations">
-          ${cards.map((card) => categoryCard(card)).join('')}
-        </div>
-      </section>
-    </div>
-  `;
-}
-
-function buildCategoryLandingCards(products) {
-  const categoryOrder = ['training', 'running', 'multisport', 'casual', 'sneakers'];
-  const genders = [
-    { value: 'mens', label: 'Men' },
-    { value: 'womens', label: 'Women' },
-  ];
-
-  return genders.flatMap((gender) => categoryOrder.map((category) => {
-    const matches = products
-      .filter((product) => product.gender === gender.value && product.category === category)
-      .sort((a, b) => (b.rating || 0) * (b.reviews || 0) - (a.rating || 0) * (a.reviews || 0));
-
-    if (!matches.length) return null;
-
-    const heroProduct = matches[0];
-    const image = (heroProduct.images && heroProduct.images[0]) || '/adokicks.png';
-
-    return {
-      gender,
-      category,
-      title: `${gender.label}'s ${CATEGORY_LABELS[category] || category}`,
-      image,
-      destination: `/${gender.value}?gender=${encodeURIComponent(gender.value)}&category=${encodeURIComponent(category)}`,
-      brand: heroProduct.brand,
-      price: heroProduct.price,
-      count: matches.length,
-    };
-  }).filter(Boolean));
-}
-
-function categoryCard(card) {
-  const genderClass = card.gender.value === 'mens' ? 'category-card-men' : 'category-card-women';
-  const copy = `${card.count} style${card.count === 1 ? '' : 's'} ready to browse from ${card.brand}.`;
-
-  return `
-    <a class="category-card ${genderClass}"
-       href="${sanitizeText(card.destination)}"
-       role="listitem"
-       aria-label="Open ${sanitizeText(card.title)}">
-      <img src="${sanitizeText(card.image)}" alt="${sanitizeText(card.title)} category background" class="category-card-image" loading="lazy">
-      <div class="category-card-overlay"></div>
-      <div class="category-card-content">
-        <p class="category-card-kicker">${sanitizeText(card.gender.label)} collection</p>
-        <h2>${sanitizeText(card.title)}</h2>
-        <p class="category-card-copy">${sanitizeText(copy)}</p>
-        <div class="category-card-meta">
-          <span class="category-card-pill">${sanitizeText(CATEGORY_LABELS[card.category] || card.category)}</span>
-          <span class="category-card-pill">From ${sanitizeText(formatCurrency(card.price))}</span>
-        </div>
-      </div>
-    </a>
-  `;
 }
 
 function renderCatalog(block, products, opts, filterShell = DEFAULT_FILTER_SHELL) {
