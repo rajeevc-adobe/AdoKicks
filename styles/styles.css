@@ -108,7 +108,7 @@ a { color: inherit; text-decoration: none; }
 .btn-close:hover { background: #f5f5f5; border-color: #dc2626; }
 
 .toast-wrap {
-  position: fixed; right: 1rem; top: 1rem;
+  position: fixed; right: 1rem; top: calc(var(--header-offset, 64px) + 0.75rem);
   z-index: 1200; display: grid; gap: 0.5rem;
 }
 .toast {

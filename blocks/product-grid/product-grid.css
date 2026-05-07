@@ -295,6 +295,34 @@
 .no-results { color: var(--color-muted); text-align: center; padding: var(--spacing-xl); grid-column: 1 / -1; }
 .link-btn { background: none; border: none; color: var(--color-brand); cursor: pointer; font: inherit; text-decoration: underline; }
 
+.product-grid.search .search-page > .product-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+@media (max-width: 1199px) {
+  .product-grid.search .search-page > .product-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .product-grid.search .search-page > .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 799px) {
+  .product-grid.search .search-page > .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 479px) {
+  .product-grid.search .search-page > .product-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Wishlist empty */
 .wishlist-empty {
   display: flex; flex-direction: column; align-items: center;

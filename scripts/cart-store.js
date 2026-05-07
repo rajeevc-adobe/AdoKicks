@@ -197,10 +197,10 @@ export function formatCurrency(value) {
 
 /* ── Toast ──────────────────────────────────────────────────────────── */
 export function toast(message, type = 'error') {
-  let container = document.querySelector('.toast-container');
+  let container = document.querySelector('.toast-wrap');
   if (!container) {
     container = document.createElement('div');
-    container.className = 'toast-container';
+    container.className = 'toast-wrap';
     container.setAttribute('aria-live', 'assertive');
     document.body.appendChild(container);
   }
@@ -208,5 +208,5 @@ export function toast(message, type = 'error') {
   el.className = `toast ${type}`;
   el.textContent = message;
   container.appendChild(el);
-  setTimeout(() => el.remove(), 2800);
+  setTimeout(() => el.remove(), 1800);
 }

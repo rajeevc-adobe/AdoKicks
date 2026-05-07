@@ -255,7 +255,7 @@ function renderSearch(block, products, shell = DEFAULT_SEARCH_SHELL) {
       <form class="search-form" role="search" aria-label="Product search">
         <input type="search" name="q" class="search-input" value="${sanitizeText(q)}"
           placeholder="${sanitizeText(shell.placeholder)}" aria-label="${sanitizeText(shell.inputLabel)}" autocomplete="off">
-        <button type="submit" class="button primary">${sanitizeText(shell.submitLabel)}</button>
+        <button type="submit" class="btn-primary">${sanitizeText(shell.submitLabel)}</button>
       </form>
       ${q
     ? `<p class="search-summary" aria-live="polite">
