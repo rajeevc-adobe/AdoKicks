@@ -139,7 +139,6 @@ function renderOrderDetail(order, list, detail, byId) {
 }
 
 export default async function decorate(block) {
-  document.body.dataset.page = 'orders';
   const user = getCurrentUser();
   if (!user) {
     window.location.href = '/auth?redirect=my-orders&notice=please_login';

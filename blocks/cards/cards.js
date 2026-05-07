@@ -34,20 +34,13 @@ function getCardsVariation(block, opts) {
   const classVariation = knownVariations.find((name) => block.classList.contains(name));
   if (classVariation) return classVariation;
 
-  const variationTexts = [
-    ...[...block.classList],
-    ...[...block.querySelectorAll(':scope > h1, :scope > h2, :scope > h3, :scope > div > div')]
-      .map((element) => element.textContent?.trim() || ''),
-  ];
-  return variationTexts
-    .map((text) => text.match(/^cards\(([^)]+)\)$/i)?.[1]?.toLowerCase())
-    .find((variation) => knownVariations.includes(variation)) || null;
+  return null;
 }
 
 function contentRows(block) {
   return [...block.children].filter((row) => {
     const key = [...row.children][0]?.textContent?.trim().toLowerCase();
-    return key !== 'variation' && key !== 'source' && !key?.startsWith('cards(');
+    return key !== 'variation' && key !== 'source';
   });
 }
 
@@ -188,7 +181,6 @@ async function decorateCategory(block, opts = {}) {
   const categoryCount = new Set(cards.map((card) => card.category)).size;
   const collectionCount = new Set(cards.map((card) => card.collection)).size;
   block.classList.add('category');
-  document.body.dataset.page = 'categories';
 
   block.innerHTML = `
     <div class="categories-page">
@@ -346,7 +338,6 @@ function decorateAboutHero(block, opts) {
   const description = opts.description || 'Adokicks builds performance and street-ready footwear designed for movement, comfort, and originality. We obsess over fit, durability, and everyday confidence in every pair we release.';
   const badgeTitle = opts['badge title'] || 'Performance x Street';
   const badgeText = opts['badge text'] || 'Engineered comfort for every stride.';
-  document.body.dataset.page = 'about';
 
   block.innerHTML = `
     <section class="about-hero section-card" aria-label="About company">

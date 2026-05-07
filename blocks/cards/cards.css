@@ -5,13 +5,13 @@
 .simple-card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
 .simple-card-label { padding: var(--spacing-md); font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text); text-align: center; }
 
-body[data-page='about'] main {
+main:has(.cards.about-hero) {
   display: grid;
   gap: 1rem;
   max-width: min(1480px, calc(100vw - 2rem));
 }
 
-body[data-page='about'] {
+body:has(.cards.about-hero) {
   background:
     radial-gradient(circle at 8% 10%, rgba(220, 38, 38, 0.12) 0%, rgba(220, 38, 38, 0) 28%),
     radial-gradient(circle at 92% 20%, rgba(17, 24, 39, 0.1) 0%, rgba(17, 24, 39, 0) 26%),
@@ -358,7 +358,8 @@ body[data-page='about'] {
 }
 
 /* Category landing variation */
-body[data-page='categories'] main {
+main:has(.cards.category),
+main:has(.cards.categories) {
   max-width: calc(100vw - 1.5rem);
 }
 

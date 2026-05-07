@@ -1,4 +1,4 @@
-body[data-page="auth"] {
+body:has(.auth) {
   background:
     radial-gradient(circle at 14% 18%, rgba(220, 38, 38, 0.1) 0%, rgba(220, 38, 38, 0) 30%),
     radial-gradient(circle at 86% 12%, rgba(17, 24, 39, 0.08) 0%, rgba(17, 24, 39, 0) 26%),

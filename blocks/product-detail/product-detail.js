@@ -290,8 +290,6 @@ function bindProductInfoEvents(wrap, product, getSelectedSize, setSelectedSize, 
 export default async function decorate(block) {
   const id = params().get('id') || '';
 
-  document.body.dataset.page = 'product';
-
   const daProduct = parseDAContent(block);
 
   block.innerHTML = '<div class="pg-loading"><span class="pg-spinner"></span></div>';

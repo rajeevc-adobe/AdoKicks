@@ -23,16 +23,6 @@ function decorateSingleBanner(block, rows, cardClass) {
     </div>`;
 }
 
-function getPageContext() {
-  // Detect current page from body dataset or URL path
-  const page = document.body.dataset.page || '';
-  const path = window.location.pathname;
-
-  if (page === 'mens' || path.includes('/mens')) return 'mens';
-  if (page === 'womens' || path.includes('/womens')) return 'womens';
-  return 'home';
-}
-
 function decorateGenderBanners(block, rows) {
   const bannerData = [];
 
@@ -65,14 +55,12 @@ function decorateGenderBanners(block, rows) {
     }
   }
 
-  const pageContext = getPageContext();
   let displayBanners = bannerData.slice(0, 2);
 
-  // Filter banners based on page context
-  if (pageContext === 'mens') {
+  if (block.classList.contains('men') || block.classList.contains('mens')) {
     displayBanners = [bannerData[0]]; // Show only men banner full-width
     block.classList.add('full-width-gender');
-  } else if (pageContext === 'womens') {
+  } else if (block.classList.contains('women') || block.classList.contains('womens')) {
     displayBanners = [bannerData[1]]; // Show only women banner full-width
     block.classList.add('full-width-gender');
   }

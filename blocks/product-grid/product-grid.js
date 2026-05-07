@@ -47,7 +47,6 @@ export default async function decorate(block) {
   const inferredGender = (opts.gender || blockGender || '').toLowerCase() || null;
   const variation = (opts.variation || '').toLowerCase()
     || variationClass
-    || getPageVariation()
     || (blockGender ? 'catalog' : 'trending');
 
   block.innerHTML = '<div class="pg-loading" aria-busy="true"><span class="pg-spinner"></span></div>';
@@ -82,28 +81,7 @@ export default async function decorate(block) {
 
 function getBlockVariationClass(block) {
   const knownVariations = ['catalog', 'featured', 'search', 'wishlist', 'trending'];
-  const classVariation = knownVariations.find((name) => block.classList.contains(name));
-  if (classVariation) return classVariation;
-
-  const variationTexts = [
-    ...[...block.classList],
-    ...[...block.querySelectorAll(':scope > h1, :scope > h2, :scope > h3, :scope > div > div')]
-      .map((element) => element.textContent?.trim() || ''),
-  ];
-
-  const authoredVariation = variationTexts
-    .map((text) => text.match(/^product-grid\(([^)]+)\)$/i)?.[1]?.toLowerCase())
-    .find(Boolean);
-
-  if (authoredVariation) {
-    if (knownVariations.includes(authoredVariation)) return authoredVariation;
-    if (['men', 'mens', 'women', 'womens'].includes(authoredVariation)) return 'catalog';
-  }
-
-  const normalizedTexts = variationTexts.map((text) => text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim());
-  if (normalizedTexts.includes('product grid search')) return 'search';
-
-  return null;
+  return knownVariations.find((name) => block.classList.contains(name)) || null;
 }
 
 function camelKey(value) {
@@ -165,22 +143,7 @@ async function loadShellConfig(path, defaults) {
   }
 }
 
-function getPageVariation() {
-  const path = window.location.pathname.toLowerCase();
-  if (path === '/featured' || path === '/featured.html' || path.endsWith('/featured')) return 'featured';
-  if (path === '/wishlist' || path === '/wishlist.html' || path.endsWith('/wishlist')) return 'wishlist';
-  return null;
-}
-
 function getBlockGender(block) {
-  const headingText = block.querySelector(':scope > h1, :scope > h2, :scope > h3')?.textContent?.trim() || '';
-  const headingMatch = headingText.match(/^product-grid\(([^)]+)\)$/i);
-  if (headingMatch) {
-    const variation = headingMatch[1].toLowerCase();
-    if (variation === 'men' || variation === 'mens') return 'mens';
-    if (variation === 'women' || variation === 'womens') return 'womens';
-  }
-
   if (block.classList.contains('men') || block.classList.contains('mens')) return 'mens';
   if (block.classList.contains('women') || block.classList.contains('womens')) return 'womens';
   return null;
@@ -268,7 +231,6 @@ function renderFeatured(block, products, opts) {
     .slice(0, limit);
 
   block.classList.add('featured');
-  document.body.dataset.page = 'featured';
 
   block.innerHTML = `
     <section class="featured-section" aria-label="Top featured shoes">
@@ -347,7 +309,6 @@ async function renderWishlistLegacy(block) {
 async function renderWishlist(block, opts = {}) {
   const wishlist = getWishlist();
   block.classList.add('wishlist');
-  document.body.dataset.page = 'wishlist';
 
   if (!wishlist.length) {
     const title = opts.emptytitle || opts.title || 'Your wishlist is empty';

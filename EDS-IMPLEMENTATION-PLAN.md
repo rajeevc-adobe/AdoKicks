@@ -8,7 +8,7 @@ The main cleanup goals are:
 
 - Header/nav is authored from `/nav`, with a hardcoded fallback only for resilience.
 - Search, cart, and filter shell copy comes from `/fragments/search-shell`, `/fragments/cart-shell`, and `/fragments/filter-shell`.
-- Page DA uses explicit block variations such as `product-grid(search)`, `banner(men)`, and `cards(timeline)`.
+- Page DA uses explicit block variations such as `product-grid(search)`, `banner(men)`, and `cards(timeline)`; active code does not infer final variations from page paths or stray text.
 - Product, cart, wishlist, auth, checkout, and orders behavior remains client-side and keeps the current localStorage data shape.
 - `DA-AUTHORING-BACKUP.md` remains the before-state backup.
 
@@ -25,7 +25,7 @@ The main cleanup goals are:
 - Header/nav was hardcoded in `blocks/header/header.js`.
 - Search popup labels, cart drawer labels, and filter panel labels were hardcoded in JS.
 - Some DA examples used migration-friendly or backup-style authoring instead of final EDS contracts.
-- Some block variations relied on path guessing or text inspection.
+- Some block variations relied on path guessing or text inspection; the strict target is authored variation classes plus explicit option rows only.
 - `product-grid` carried category landing-page responsibilities that are better handled by authored cards.
 - `scripts/aem.js` should be treated as boilerplate core and not receive project-specific changes.
 
@@ -46,7 +46,7 @@ The main cleanup goals are:
 - Featured: `product-grid(featured)` with `limit` and `ids`; desktop stays four products per row.
 - About: `cards(about-hero)`, `cards(metrics)`, `cards(values)`, `cards(timeline)`.
 - Wishlist: `product-grid(wishlist)` with authored empty state.
-- Search: `product-grid(search)` as the final contract; old `Product Grid | Search` is migration fallback only.
+- Search: `product-grid(search)` as the final contract.
 - Product: `product-detail`, query-driven by `/product?id=...` when product data is not manually authored.
 - Auth/Checkout/Order Confirmation/My Orders: dedicated block contracts.
 
@@ -57,7 +57,7 @@ The main cleanup goals are:
   - Implement `/fragments/search-shell`, `/fragments/cart-shell`, and `/fragments/filter-shell`.
   - Make all final DA files copy-ready and EDS-correct.
   - Explicitly support `banner(men)` and `banner(women)`.
-  - Use `product-grid(search)` for final search DA while keeping old search DA fallback.
+  - Use `product-grid(search)` for final search DA with no page/path guessing fallback.
 
 - Should Fix:
   - Use wishlist authored empty state fields.

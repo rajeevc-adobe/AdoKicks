@@ -127,7 +127,6 @@ function renderAuthMarkup(block, config) {
 }
 
 export default function decorate(block) {
-  document.body.dataset.page = 'auth';
   const config = getConfig(block);
   if (getCurrentUser()) {
     window.location.href = normalizeRedirect(params().get('redirect'));

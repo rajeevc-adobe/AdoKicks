@@ -1,11 +1,11 @@
-body[data-page='product'] {
+body:has(.product-detail) {
   background:
     radial-gradient(circle at 10% 12%, rgba(220, 38, 38, 0.1) 0%, rgba(220, 38, 38, 0) 28%),
     radial-gradient(circle at 88% 14%, rgba(17, 24, 39, 0.08) 0%, rgba(17, 24, 39, 0) 26%),
     linear-gradient(180deg, #fff8f7 0%, #ffffff 52%, #f8fafc 100%);
 }
 
-body[data-page='product'] main {
+main:has(.product-detail) {
   max-width: min(1220px, calc(100vw - 2rem));
   margin-inline: auto;
 }

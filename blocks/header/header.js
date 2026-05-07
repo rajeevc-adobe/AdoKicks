@@ -36,7 +36,18 @@ const DEFAULT_NAV = {
   tools: {
     search: { label: 'Search', href: '/search' },
     wishlist: { label: 'Wishlist', href: '/wishlist' },
+    cart: { label: 'Cart', href: '/checkout' },
     signIn: { label: 'Sign In', href: '/auth' },
+    profile: { label: 'Profile', href: '/my-orders' },
+    myOrders: { label: 'My Orders', href: '/my-orders' },
+    logout: { label: 'Logout', href: '/auth' },
+  },
+  mobile: {
+    openLabel: 'Open menu',
+    navigationLabel: 'Mobile navigation',
+    kicker: 'Menu',
+    title: 'Browse Adokicks',
+    closeLabel: 'Close menu',
   },
 };
 
@@ -166,6 +177,7 @@ async function loadNavConfig() {
     const brandLink = brandNodes.flatMap((node) => [...node.querySelectorAll('a[href]')])[0];
     const navNodes = sectionAfterHeading(fragment, 'Nav');
     const toolNodes = sectionAfterHeading(fragment, 'Tools');
+    const mobileNodes = sectionAfterHeading(fragment, 'Mobile');
     if (!brandNodes.length || !brandLink || !navNodes.length || !toolNodes.length) return DEFAULT_NAV;
 
     const brandText = brandNodes.map((node) => node.textContent.trim()).filter(Boolean).join(' ');
@@ -179,6 +191,8 @@ async function loadNavConfig() {
     if (!navItems.length || !tools.length) return DEFAULT_NAV;
 
     const findTool = (name, fallback) => tools.find((link) => normalizeKey(link.label) === normalizeKey(name)) || fallback;
+    const mobileRoot = document.createElement('div');
+    mobileNodes.forEach((node) => mobileRoot.append(node.cloneNode(true)));
 
     return {
       brand: {
@@ -190,8 +204,13 @@ async function loadNavConfig() {
       tools: {
         search: findTool('Search', DEFAULT_NAV.tools.search),
         wishlist: findTool('Wishlist', DEFAULT_NAV.tools.wishlist),
+        cart: findTool('Cart', DEFAULT_NAV.tools.cart),
         signIn: findTool('Sign In', DEFAULT_NAV.tools.signIn),
+        profile: findTool('Profile', DEFAULT_NAV.tools.profile),
+        myOrders: findTool('My Orders', DEFAULT_NAV.tools.myOrders),
+        logout: findTool('Logout', DEFAULT_NAV.tools.logout),
       },
+      mobile: mobileNodes.length ? readFragmentConfig(mobileRoot, DEFAULT_NAV.mobile) : DEFAULT_NAV.mobile,
     };
   } catch {
     return DEFAULT_NAV;
@@ -311,7 +330,7 @@ async function ensureCartDrawer() {
   }
 }
 
-function ensureProfileMenu() {
+function ensureProfileMenu(tools = DEFAULT_NAV.tools) {
   const user = getCurrentUser();
   const existing = document.getElementById('profile-menu');
   if (!user) {
@@ -323,8 +342,8 @@ function ensureProfileMenu() {
   menu.id = 'profile-menu';
   menu.className = 'profile-menu hidden';
   menu.innerHTML = `
-    <a href="/my-orders" aria-label="View my orders">My Orders</a>
-    <button id="logout-btn" type="button" aria-label="Logout">Logout</button>
+    <a href="${sanitize(tools.myOrders.href)}" aria-label="${sanitize(tools.myOrders.label)}">${sanitize(tools.myOrders.label)}</a>
+    <button id="logout-btn" type="button" aria-label="${sanitize(tools.logout.label)}">${sanitize(tools.logout.label)}</button>
   `;
   document.body.appendChild(menu);
 }
@@ -465,14 +484,14 @@ export default async function decorate(block) {
           <button id="open-search-mobile" class="icon-btn nav-icon-btn nav-mobile-icon" type="button" aria-label="Open product search" title="${sanitize(navConfig.tools.search.label)}">
             <img src="/assests/icons/search-button-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg">
           </button>
-          <button id="open-cart-mobile" class="icon-btn nav-icon-btn nav-mobile-icon" type="button" aria-label="Open cart sidebar" title="Cart">
+          <button id="open-cart-mobile" class="icon-btn nav-icon-btn nav-mobile-icon" type="button" aria-label="Open ${sanitize(navConfig.tools.cart.label)}" title="${sanitize(navConfig.tools.cart.label)}">
             <img src="/assests/icons/cart-shopping-fast-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg">
             <span id="cart-count-mobile" class="icon-count">0</span>
           </button>
           ${user
-    ? '<button id="profile-btn-mobile" class="icon-btn nav-icon-btn nav-mobile-icon nav-auth-icon" type="button" aria-label="Profile menu" title="Profile"><img src="/assests/icons/person-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg"></button>'
+    ? `<button id="profile-btn-mobile" class="icon-btn nav-icon-btn nav-mobile-icon nav-auth-icon" type="button" aria-label="${sanitize(navConfig.tools.profile.label)}" title="${sanitize(navConfig.tools.profile.label)}"><img src="/assests/icons/person-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg"></button>`
     : `<a href="${sanitize(navConfig.tools.signIn.href)}" class="icon-btn nav-icon-btn nav-mobile-icon nav-auth-icon" aria-label="Sign in" title="${sanitize(navConfig.tools.signIn.label)}"><img src="/assests/icons/person-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg"></a>`}
-          <button id="mobile-menu-btn" class="icon-btn nav-icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+          <button id="mobile-menu-btn" class="icon-btn nav-icon-btn menu-toggle" type="button" aria-label="${sanitize(navConfig.mobile.openLabel)}" aria-expanded="false" aria-controls="mobile-menu">
             <span class="menu-toggle-lines" aria-hidden="true"><span></span><span></span><span></span></span>
           </button>
         </div>
@@ -497,21 +516,21 @@ export default async function decorate(block) {
               <img src="/assests/icons/heart-alt-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg">
               <span id="wish-count" class="icon-count">0</span>
             </a>
-            <button id="open-cart" class="icon-btn nav-icon-btn" type="button" aria-label="Open cart sidebar" title="Cart">
+            <button id="open-cart" class="icon-btn nav-icon-btn" type="button" aria-label="Open ${sanitize(navConfig.tools.cart.label)}" title="${sanitize(navConfig.tools.cart.label)}">
               <img src="/assests/icons/cart-shopping-fast-svgrepo-com.svg" alt="" aria-hidden="true" class="nav-icon-svg">
               <span id="cart-count" class="icon-count">0</span>
             </button>
             ${user
-    ? `<div class="profile-wrap"><button id="profile-btn" class="profile-avatar" type="button" aria-label="Profile menu">${sanitize(user.name[0].toUpperCase())}</button></div>`
+    ? `<div class="profile-wrap"><button id="profile-btn" class="profile-avatar" type="button" aria-label="${sanitize(navConfig.tools.profile.label)}">${sanitize(user.name[0].toUpperCase())}</button></div>`
     : `<a href="${sanitize(navConfig.tools.signIn.href)}" class="btn-primary" aria-label="Sign in">${sanitize(navConfig.tools.signIn.label)}</a>`}
           </div>
         </div>
       </nav>
       <div id="mobile-menu-backdrop" class="mobile-menu-backdrop hidden" aria-hidden="true"></div>
-      <aside id="mobile-menu" class="mobile-menu hidden" aria-label="Mobile navigation">
+      <aside id="mobile-menu" class="mobile-menu hidden" aria-label="${sanitize(navConfig.mobile.navigationLabel)}">
         <div class="mobile-menu-head">
-          <div><p class="mobile-menu-kicker">Menu</p><h2>Browse Adokicks</h2></div>
-          <button id="mobile-menu-close" class="btn-close" type="button" aria-label="Close menu">&times;</button>
+          <div><p class="mobile-menu-kicker">${sanitize(navConfig.mobile.kicker)}</p><h2>${sanitize(navConfig.mobile.title)}</h2></div>
+          <button id="mobile-menu-close" class="btn-close" type="button" aria-label="${sanitize(navConfig.mobile.closeLabel)}">&times;</button>
         </div>
         <div class="mobile-menu-links">
           ${mobileLinks}
@@ -523,7 +542,7 @@ export default async function decorate(block) {
 
   await ensureSearchPopup();
   await ensureCartDrawer();
-  ensureProfileMenu();
+  ensureProfileMenu(navConfig.tools);
 
   const products = await import('../../scripts/product-store.js').then((m) => m.getProducts());
   const productState = { byId: Object.fromEntries(products.map((p) => [p.id, p])) };

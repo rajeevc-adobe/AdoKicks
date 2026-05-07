@@ -30,7 +30,6 @@ function getConfig(block) {
 }
 
 export default function decorate(block) {
-  document.body.dataset.page = 'confirmation';
   const config = getConfig(block);
   const latest = getOrders()[0];
   const orderId = params().get('orderId') || latest?.id || '';

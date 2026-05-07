@@ -140,7 +140,6 @@ function renderSummary(summary, cart, byId) {
 }
 
 export default async function decorate(block) {
-  document.body.dataset.page = 'checkout';
   const user = getCurrentUser();
   if (!user) {
     window.location.href = '/auth?redirect=checkout&notice=please_login';

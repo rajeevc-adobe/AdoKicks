@@ -19,4 +19,20 @@
 
 [Search](/search)
 [Wishlist](/wishlist)
+[Cart](/checkout)
 [Sign In](/auth)
+[Profile](/my-orders)
+[My Orders](/my-orders)
+[Logout](/auth)
+
+---
+
+## Mobile
+
+| Mobile | |
+|---|---|
+| open label | Open menu |
+| navigation label | Mobile navigation |
+| kicker | Menu |
+| title | Browse Adokicks |
+| close label | Close menu |

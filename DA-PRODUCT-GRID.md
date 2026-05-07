@@ -13,7 +13,6 @@ Use a real EDS block variation, not plain text labels:
 - `product-grid(featured)` - featured products
 - `product-grid(search)` - search results
 - `product-grid(wishlist)` - wishlist page
-- `product-grid(categories)` - categories landing page
 
 ## Mens Page Authoring
 
@@ -51,27 +50,6 @@ Use this structure for the mens page:
 | title | Adokicks | Women's Shoes |
 | description | Shop all women's running, training, casual and lifestyle shoes at Adokicks. Free delivery above Rs 999. |
 | og:image | /media/banner/womens.png |
-```
-
-## Categories Page Authoring
-
-Use this structure for the categories page:
-
-```md
-| product-grid(categories) | |
-|---|---|
-| variation | categories |
-| eyebrow | Category atlas |
-| title | Choose the edit that matches your pace. |
-| subtitle | Browse the core category collections directly, with each tile tuned to feel broad, balanced, and easy to scan. |
-
----
-
-| Metadata | |
-|---|---|
-| title | Adokicks | Categories |
-| description | Browse Adokicks shoes by category across men's and women's running, training, casual, multisport and sneaker collections. |
-| og:image | /media/banner/categories.png |
 ```
 
 ## Featured Page Authoring
@@ -124,13 +102,13 @@ The block supports these filter fields in the authored table:
 - `gender` - `mens`, `womens`, or omitted for a shared catalog
 - `limit` - optional item limit for featured grids
 - `ids` - optional comma-separated product IDs to force into featured grids
-- `eyebrow` - optional categories hero eyebrow
-- `subtitle` - optional categories hero subtitle
+- `subtitle` - optional subtitle for featured grids
 
 ## Important Notes
 
 - The block variation must be authored as `product-grid(mens)` or `product-grid(womens)` in DA.
 - Do not use a plain text title row as the only signal for variation.
+- Categories are authored with `cards(category)`, not `product-grid`; see `DA-CATEGORIES.md`.
 - The metadata table is for SEO only.
 - Product data still comes from `shoesrc.json`.
 - For mens/womens pages, the block should render the actual filtered catalog, not static text.
