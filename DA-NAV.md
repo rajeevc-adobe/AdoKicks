@@ -29,10 +29,8 @@
 
 ## Mobile
 
-| Mobile | |
-|---|---|
-| open label | Open menu |
-| navigation label | Mobile navigation |
-| kicker | Menu |
-| title | Browse Adokicks |
-| close label | Close menu |
+- open label: Open menu
+- navigation label: Mobile navigation
+- kicker: Menu
+- title: Browse Adokicks
+- close label: Close menu
