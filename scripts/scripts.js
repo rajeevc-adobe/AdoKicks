@@ -1,5 +1,5 @@
 /**
- * Adokicks EDS — scripts/scripts.js
+ * Adokicks EDS - scripts/scripts.js
  *
  * This is the EDS page-loading orchestrator (boilerplate pattern preserved).
  * All SHARED common code extracted from the original app.js lives here:
@@ -10,17 +10,16 @@
  *   - Re-exports of every shared utility blocks need (product-store, cart-store)
  *
  * Block-specific logic stays in each block's own JS file:
- *   blocks/header/header.js     → nav, search overlay, cart drawer, profile menu
- *   blocks/hero/hero.js         → video carousel, slide rotation
- *   blocks/product-grid/...     → catalog filters, trending, search, wishlist grid
- *   blocks/banner/banner.js     → gender banners
- *   blocks/cards/cards.js       → about strip, metrics, values, timeline, categories
- *   blocks/benefits/benefits.js → 4-col benefits strip
- *   blocks/product-detail/...   → PDP gallery, size picker, add-to-cart
- *   blocks/auth/auth.js         → login / signup forms + SHA-256 hashing
- *   blocks/checkout/checkout.js → checkout form + order summary
- *   blocks/order-confirmation/  → countdown + latest order display
- *   blocks/orders-list/...      → order history list + detail view
+ *   blocks/header/header.js     -> nav, search overlay, cart drawer, profile menu
+ *   blocks/hero/hero.js         -> video carousel, slide rotation
+ *   blocks/product-grid/...     -> catalog filters, trending, search, wishlist grid
+ *   blocks/banner/banner.js     -> gender banners
+ *   blocks/cards/cards.js       -> about strip, metrics, values, timeline, categories
+ *   blocks/product-detail/...   -> PDP gallery, size picker, add-to-cart
+ *   blocks/auth/auth.js         -> login / signup forms + SHA-256 hashing
+ *   blocks/checkout/checkout.js -> checkout form + order summary
+ *   blocks/order-confirmation/  -> countdown + latest order display
+ *   blocks/orders-list/...      -> order history list + detail view
  */
 
 import {
@@ -37,7 +36,7 @@ import {
   loadCSS,
 } from './aem.js';
 
-// ─── Re-exports ───────────────────────────────────────────────────────────────
+// Re-exports
 // Blocks import loadFragment from here so they don't need to know the path.
 export { loadFragment } from '../blocks/fragment/fragment.js';
 
@@ -46,13 +45,11 @@ export { loadFragment } from '../blocks/fragment/fragment.js';
 export * from './product-store.js';
 export * from './cart-store.js';
 
-// ─── Constants (mirror of original app.js CATEGORY_LABELS + STORAGE_KEYS) ────
+// Constants and shared utilities
 // Re-exported via product-store.js and cart-store.js above.
 // Kept here as a named constant for inline use in scripts.js itself.
-// ─── Utilities used by multiple blocks ───────────────────────────────────────
-
 /**
- * HTML escape — mirrors original sanitize() from app.js.
+ * HTML escape - mirrors original sanitize() from app.js.
  * Blocks use this when inserting user-derived strings into innerHTML.
  * @param {*} text
  * @returns {string}
@@ -101,7 +98,7 @@ export async function sha256(input) {
   return byteArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ─── Validation helpers (from original app.js) ────────────────────────────────
+// Validation helpers
 // Exported so auth and checkout blocks can import them.
 
 /** @param {string} phone */
@@ -129,7 +126,7 @@ export function validateZip(zip) {
   return /^\d{5,6}$/.test(zip);
 }
 
-// ─── Header offset sync ───────────────────────────────────────────────────────
+// Header offset sync
 /**
  * Reads the rendered height of .site-header (the sticky nav) and writes it
  * to --header-offset on <html>. The original app.js called this on load and
@@ -142,7 +139,7 @@ export function syncHeaderOffset() {
   document.documentElement.style.setProperty('--header-offset', `${offset}px`);
 }
 
-// ─── Global event delegation ──────────────────────────────────────────────────
+// Global event delegation
 /**
  * Binds the document-level click handler for actions that can originate from
  * any block (wishlist toggle, cart qty controls, logout).
@@ -170,7 +167,7 @@ function bindGlobalDelegation() {
     const { target } = event;
     if (!(target instanceof HTMLElement)) return;
 
-    // ── Wishlist toggle ──────────────────────────────────────────────────────
+    // Wishlist toggle
     // data-action="wishlist-toggle" data-product-id="..."
     // Used on .heart-btn elements inside product cards across all blocks.
     const wishBtn = target.closest('[data-action="wishlist-toggle"]');
@@ -190,7 +187,7 @@ function bindGlobalDelegation() {
       return;
     }
 
-    // ── Cart quantity increment ──────────────────────────────────────────────
+    // Cart quantity increment
     // data-action="cart-inc" data-product-id="..." data-size="..."
     const incBtn = target.closest('[data-action="cart-inc"]');
     if (incBtn instanceof HTMLElement) {
@@ -204,7 +201,7 @@ function bindGlobalDelegation() {
       return;
     }
 
-    // ── Cart quantity decrement ──────────────────────────────────────────────
+    // Cart quantity decrement
     const decBtn = target.closest('[data-action="cart-dec"]');
     if (decBtn instanceof HTMLElement) {
       await ensureStore();
@@ -217,7 +214,7 @@ function bindGlobalDelegation() {
       return;
     }
 
-    // ── Cart item remove ─────────────────────────────────────────────────────
+    // Cart item remove
     const removeBtn = target.closest('[data-action="cart-remove"]');
     if (removeBtn instanceof HTMLElement) {
       await ensureStore();
@@ -232,7 +229,7 @@ function bindGlobalDelegation() {
       return;
     }
 
-    // ── Logout ───────────────────────────────────────────────────────────────
+    // Logout
     // data-action="logout" on any button anywhere
     const logoutBtn = target.closest('[data-action="logout"]');
     if (logoutBtn instanceof HTMLElement) {
@@ -243,7 +240,7 @@ function bindGlobalDelegation() {
     }
   });
 
-  // ── Keyboard: Escape closes all overlays ──────────────────────────────────
+  // Keyboard: Escape closes all overlays
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     // Signal all open overlays to close. Each block listens for this event.
@@ -252,7 +249,7 @@ function bindGlobalDelegation() {
   });
 }
 
-// ─── buildHeroBlock ───────────────────────────────────────────────────────────
+// buildHeroBlock
 /**
  * Auto-builds a Hero block from a leading h1 + picture pair only when the
  * section does NOT already contain an authored hero block. On Adokicks the
@@ -276,11 +273,11 @@ function buildHeroBlock(main) {
   }
 }
 
-// ─── decorateButtons ─────────────────────────────────────────────────────────
+// decorateButtons
 /**
  * Converts formatted markdown links to button elements.
- * **bold link** → .button.primary
- * _em link_     → .button.secondary
+ * **bold link** -> .button.primary
+ * _em link_     -> .button.secondary
  * This is the standard boilerplate pattern; kept exactly as-is.
  */
 function decorateButtons(main) {
@@ -310,11 +307,11 @@ function decorateButtons(main) {
   });
 }
 
-// ─── buildAutoBlocks ─────────────────────────────────────────────────────────
+// buildAutoBlocks
 /**
  * Automatically builds synthetic blocks. Handles:
- *   1. Fragment links (/fragments/...) → replaced with fragment content
- *   2. Leading h1 + picture → hero block (if not already authored)
+ *   1. Fragment links (/fragments/...) -> replaced with fragment content
+ *   2. Leading h1 + picture -> hero block (if not already authored)
  */
 async function buildAutoBlocks(main) {
   try {
@@ -343,7 +340,7 @@ async function buildAutoBlocks(main) {
   }
 }
 
-// ─── decorateMain ────────────────────────────────────────────────────────────
+// decorateMain
 /**
  * Called during loadEager (before LCP). Applies all structural decoration.
  * Exported so tests or other modules can call it directly if needed.
@@ -357,7 +354,7 @@ export async function decorateMain(main) {
   decorateButtons(main);
 }
 
-// ─── Font loading ─────────────────────────────────────────────────────────────
+// Font loading
 async function loadFonts() {
   await loadCSS(`${window.hlx.codeBasePath}/styles/fonts.css`);
   try {
@@ -367,10 +364,10 @@ async function loadFonts() {
   } catch (e) { /* noop */ }
 }
 
-// ─── Phase 1: Eager ───────────────────────────────────────────────────────────
+// Phase 1: Eager
 /**
  * Runs synchronously before LCP. Decorates main, marks body as visible.
- * Mirrors original app.js init() — the page appears immediately, not after
+ * Mirrors original app.js init() - the page appears immediately, not after
  * the product data loads.
  */
 async function loadEager(doc) {
@@ -389,7 +386,7 @@ async function loadEager(doc) {
   } catch (e) { /* noop */ }
 }
 
-// ─── Phase 2: Lazy ────────────────────────────────────────────────────────────
+// Phase 2: Lazy
 /**
  * Runs after LCP. Loads header, footer, remaining sections, lazy styles.
  * After everything is ready, syncs --header-offset and binds global events.
@@ -426,13 +423,13 @@ async function loadLazy(doc) {
   bindGlobalDelegation();
 }
 
-// ─── Phase 3: Delayed ────────────────────────────────────────────────────────
+// Phase 3: Delayed
 function loadDelayed() {
   // eslint-disable-next-line import/no-cycle
   window.setTimeout(() => import('./delayed.js'), 3000);
 }
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
+// Boot
 async function loadPage() {
   await loadEager(document);
   await loadLazy(document);
