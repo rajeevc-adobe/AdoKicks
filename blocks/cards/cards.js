@@ -95,16 +95,14 @@ function decorateComposed(block) {
 
   const panels = imageCells.slice(0, 3).map((cell, index) => {
     const label = titleCells[index]?.textContent?.trim() || '';
-    const link = cell?.querySelector('a');
-    const href = link?.href || imageSrcFromCell(cell) || '#';
     const imgSrc = imageSrcFromCell(cell);
     if (!imgSrc) return '';
 
     return `
-      <a class="about-image-panel" href="${href}" aria-label="${label || title}">
+      <div class="about-image-panel" role="img" aria-label="${label || title}">
         <img src="${imgSrc}" alt="${label || title}" loading="lazy">
         ${label ? `<span>${label}</span>` : ''}
-      </a>`;
+      </div>`;
   }).join('');
 
   block.innerHTML = `
