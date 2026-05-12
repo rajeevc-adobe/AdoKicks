@@ -52,6 +52,10 @@ const DEFAULT_FILTER_SHELL = {
   sneakersCategoryLabel: 'Sneakers',
 };
 
+const PRICE_STEP = 1;
+const PRICE_MIN_GAP = 1;
+const PRICE_NEAR_GAP = 1000;
+
 const FILTER_PLACEHOLDER_KEYS = {
   filterShellFilterToggleLabel: 'filterToggleLabel',
   filterShellSortLabel: 'sortLabel',
@@ -638,23 +642,25 @@ function renderDesktopFilterOptions(name, options, selected, getLabel = (value) 
 
 function renderPriceRange(filtersMeta, selected, suffix = '', shell = DEFAULT_FILTER_SHELL) {
   const id = suffix ? `-${suffix}` : '';
+  const minInputMax = Math.max(0, selected.maxPrice - PRICE_MIN_GAP);
+  const maxInputMin = Math.min(filtersMeta.maxPrice, selected.minPrice + PRICE_MIN_GAP);
   return `
     <div class="price-range-stack">
       <div class="price-range-input-row">
         <div class="price-range-control">
           <label for="min-price${id}">${sanitizeText(shell.minAmountLabel)}</label>
-          <input id="min-price${id}" type="number" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.minPrice}" aria-label="${sanitizeText(shell.minAmountLabel)}">
+          <input id="min-price${id}" type="number" min="0" max="${minInputMax}" step="${PRICE_STEP}" value="${selected.minPrice}" aria-label="${sanitizeText(shell.minAmountLabel)}">
         </div>
         <div class="price-range-control">
           <label for="max-price${id}">${sanitizeText(shell.maxAmountLabel)}</label>
-          <input id="max-price${id}" type="number" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.maxPrice}" aria-label="${sanitizeText(shell.maxAmountLabel)}">
+          <input id="max-price${id}" type="number" min="${maxInputMin}" max="${filtersMeta.maxPrice}" step="${PRICE_STEP}" value="${selected.maxPrice}" aria-label="${sanitizeText(shell.maxAmountLabel)}">
         </div>
       </div>
       <div class="price-range-dual" data-price-range>
         <div class="price-range-track" aria-hidden="true"></div>
         <div class="price-range-progress" aria-hidden="true"></div>
-        <input id="min-price-slider${id}" class="price-range-slider price-range-slider-min" type="range" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.minPrice}" aria-label="${sanitizeText(shell.minPriceSliderLabel)}">
-        <input id="max-price-slider${id}" class="price-range-slider price-range-slider-max" type="range" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.maxPrice}" aria-label="${sanitizeText(shell.maxPriceSliderLabel)}">
+        <input id="min-price-slider${id}" class="price-range-slider price-range-slider-min" type="range" min="0" max="${filtersMeta.maxPrice}" step="${PRICE_STEP}" value="${selected.minPrice}" aria-label="${sanitizeText(shell.minPriceSliderLabel)}">
+        <input id="max-price-slider${id}" class="price-range-slider price-range-slider-max" type="range" min="0" max="${filtersMeta.maxPrice}" step="${PRICE_STEP}" value="${selected.maxPrice}" aria-label="${sanitizeText(shell.maxPriceSliderLabel)}">
       </div>
       <div class="range-scale"><span>${formatCurrency(0)}</span><span>${formatCurrency(filtersMeta.maxPrice)}</span></div>
     </div>
@@ -685,6 +691,9 @@ function setFilterPanelVisibility(panel, filterToggleBtn, forceOpen) {
 }
 
 function syncFilterControls(panel, filtersMeta, selected, sortMenu, shell = DEFAULT_FILTER_SHELL) {
+  selected.minPrice = Math.max(0, Math.min(selected.minPrice, selected.maxPrice - PRICE_MIN_GAP));
+  selected.maxPrice = Math.min(filtersMeta.absoluteMaxPrice, Math.max(selected.maxPrice, selected.minPrice + PRICE_MIN_GAP));
+
   // Sync number inputs and sliders
   [
     { id: 'min-price', isMin: true },
@@ -695,8 +704,8 @@ function syncFilterControls(panel, filtersMeta, selected, sortMenu, shell = DEFA
     const input = document.getElementById(id);
     if (input instanceof HTMLInputElement) {
       input.value = String(isMin ? selected.minPrice : selected.maxPrice);
-      if (isMin) input.max = String(selected.maxPrice);
-      else input.min = String(selected.minPrice);
+      input.min = String(isMin ? 0 : selected.minPrice);
+      input.max = String(isMin ? selected.maxPrice : filtersMeta.absoluteMaxPrice);
     }
   });
 
@@ -709,8 +718,8 @@ function syncFilterControls(panel, filtersMeta, selected, sortMenu, shell = DEFA
     const input = document.getElementById(id);
     if (input instanceof HTMLInputElement) {
       input.value = String(isMin ? selected.minPrice : selected.maxPrice);
-      if (isMin) input.max = String(selected.maxPrice);
-      else input.min = String(selected.minPrice);
+      input.min = '0';
+      input.max = String(filtersMeta.absoluteMaxPrice);
     }
   });
 
@@ -723,6 +732,10 @@ function syncFilterControls(panel, filtersMeta, selected, sortMenu, shell = DEFA
       el.style.setProperty('--range-start', `${start}%`);
       el.style.setProperty('--range-end', `${end}%`);
     }
+  });
+
+  panel.querySelectorAll('.price-range-slider').forEach((input) => {
+    input.classList.toggle('price-range-slider-near', selected.maxPrice - selected.minPrice <= PRICE_NEAR_GAP);
   });
 
   // Sync desktop checkboxes
@@ -916,11 +929,13 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null,
     const t = e.target;
     if (!(t instanceof HTMLInputElement)) return;
     if (t.id.startsWith('min-price')) {
-      selected.minPrice = Math.max(0, Math.min(Number(t.value), selected.maxPrice));
+      selected.minPrice = Math.max(0, Math.min(Number(t.value), selected.maxPrice - PRICE_MIN_GAP));
+      t.value = String(selected.minPrice);
       doRender();
     }
     if (t.id.startsWith('max-price')) {
-      selected.maxPrice = Math.min(allMeta.absoluteMaxPrice, Math.max(Number(t.value), selected.minPrice));
+      selected.maxPrice = Math.min(allMeta.absoluteMaxPrice, Math.max(Number(t.value), selected.minPrice + PRICE_MIN_GAP));
+      t.value = String(selected.maxPrice);
       doRender();
     }
   });
