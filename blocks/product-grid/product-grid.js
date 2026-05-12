@@ -928,6 +928,7 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null,
   panel.addEventListener('input', (e) => {
     const t = e.target;
     if (!(t instanceof HTMLInputElement)) return;
+    if (t.type !== 'range') return;
     if (t.id.startsWith('min-price')) {
       selected.minPrice = Math.max(0, Math.min(Number(t.value), selected.maxPrice - PRICE_MIN_GAP));
       t.value = String(selected.minPrice);
@@ -944,6 +945,23 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null,
   panel.addEventListener('change', (e) => {
     const t = e.target;
     if (!(t instanceof HTMLInputElement)) return;
+    if (t.type === 'number') {
+      const value = t.value.trim() === '' ? NaN : Number(t.value);
+      if (t.id.startsWith('min-price')) {
+        selected.minPrice = Number.isFinite(value)
+          ? Math.max(0, Math.min(value, selected.maxPrice - PRICE_MIN_GAP))
+          : 0;
+        doRender();
+        return;
+      }
+      if (t.id.startsWith('max-price')) {
+        selected.maxPrice = Number.isFinite(value)
+          ? Math.min(allMeta.absoluteMaxPrice, Math.max(value, selected.minPrice + PRICE_MIN_GAP))
+          : allMeta.absoluteMaxPrice;
+        doRender();
+        return;
+      }
+    }
     if (t.name === 'category') {
       if (t.checked) selected.categories.add(t.value);
       else selected.categories.delete(t.value);
