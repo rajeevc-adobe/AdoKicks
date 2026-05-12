@@ -615,18 +615,20 @@
 .price-range-input-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
+  gap: 0.45rem;
 }
 
 .price-range-control {
   display: grid;
   gap: 0.45rem;
+  min-width: 0;
 }
 
 .price-range-control label {
   font-size: 0.84rem;
   font-weight: 700;
   color: #7f1d1d;
+  white-space: nowrap;
 }
 
 .price-range-control input[type='number'] {

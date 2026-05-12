@@ -2,6 +2,7 @@ import { getProducts, CATEGORY_LABELS } from '../../scripts/product-store.js';
 import {
   formatCurrency, isWishlisted, toggleWishlist, toast, getWishlist,
 } from '../../scripts/cart-store.js';
+import { fetchPlaceholders } from '../../scripts/placeholders.js';
 
 const DEFAULT_SEARCH_SHELL = {
   inputLabel: 'Search products',
@@ -37,6 +38,57 @@ const DEFAULT_FILTER_SHELL = {
   mobileKicker: 'Refine results',
   mobileTitle: 'Filters',
   noResultsText: 'No products match your filters.',
+  panelAriaLabel: 'Filter products',
+  desktopFormAriaLabel: 'Product filters',
+  productSectionAriaLabel: 'Products',
+  productResultsAriaLabel: 'Products results',
+  mobileFormAriaLabel: 'Product filters for smaller screens',
+  minPriceSliderLabel: 'Minimum price slider',
+  maxPriceSliderLabel: 'Maximum price slider',
+  trainingCategoryLabel: 'Training Shoes',
+  runningCategoryLabel: 'Running Shoes',
+  multisportCategoryLabel: 'Multisport Shoes',
+  casualCategoryLabel: 'Casual Shoes',
+  sneakersCategoryLabel: 'Sneakers',
+};
+
+const FILTER_PLACEHOLDER_KEYS = {
+  filterShellFilterToggleLabel: 'filterToggleLabel',
+  filterShellSortLabel: 'sortLabel',
+  filterShellSortMenuLabel: 'sortMenuLabel',
+  filterShellLowHighLabel: 'lowHighLabel',
+  filterShellHighLowLabel: 'highLowLabel',
+  filterShellTitle: 'title',
+  filterShellResetLabel: 'resetLabel',
+  filterShellCloseLabel: 'closeLabel',
+  filterShellPriceLabel: 'priceLabel',
+  filterShellMinAmountLabel: 'minAmountLabel',
+  filterShellMaxAmountLabel: 'maxAmountLabel',
+  filterShellGenderLabel: 'genderLabel',
+  filterShellCategoryLabel: 'categoryLabel',
+  filterShellSizeLabel: 'sizeLabel',
+  filterShellBrandLabel: 'brandLabel',
+  filterShellAllLabel: 'allLabel',
+  filterShellAllCategoriesLabel: 'allCategoriesLabel',
+  filterShellAllSizesLabel: 'allSizesLabel',
+  filterShellAllBrandsLabel: 'allBrandsLabel',
+  filterShellMensLabel: 'mensLabel',
+  filterShellWomensLabel: 'womensLabel',
+  filterShellMobileKicker: 'mobileKicker',
+  filterShellMobileTitle: 'mobileTitle',
+  filterShellNoResultsText: 'noResultsText',
+  filterShellPanelAriaLabel: 'panelAriaLabel',
+  filterShellDesktopFormAriaLabel: 'desktopFormAriaLabel',
+  filterShellProductSectionAriaLabel: 'productSectionAriaLabel',
+  filterShellProductResultsAriaLabel: 'productResultsAriaLabel',
+  filterShellMobileFormAriaLabel: 'mobileFormAriaLabel',
+  filterShellMinPriceSliderLabel: 'minPriceSliderLabel',
+  filterShellMaxPriceSliderLabel: 'maxPriceSliderLabel',
+  filterShellTrainingCategoryLabel: 'trainingCategoryLabel',
+  filterShellRunningCategoryLabel: 'runningCategoryLabel',
+  filterShellMultisportCategoryLabel: 'multisportCategoryLabel',
+  filterShellCasualCategoryLabel: 'casualCategoryLabel',
+  filterShellSneakersCategoryLabel: 'sneakersCategoryLabel',
 };
 
 export default async function decorate(block) {
@@ -55,7 +107,7 @@ export default async function decorate(block) {
     if (variation === 'wishlist') { await renderWishlist(block, opts); return; }
     const products = await getProducts();
     if (variation === 'catalog') {
-      const filterShell = await loadShellConfig('/fragments/filter-shell', DEFAULT_FILTER_SHELL);
+      const filterShell = await loadFilterShellConfig(DEFAULT_FILTER_SHELL);
       renderCatalog(block, products, { ...opts, gender: inferredGender }, filterShell);
     } else if (variation === 'featured') renderFeatured(block, products, opts);
     else if (variation === 'search') {
@@ -139,6 +191,23 @@ async function loadShellConfig(path, defaults) {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.warn(`[product-grid] using fallback shell copy for ${path}`, error);
+    return { ...defaults };
+  }
+}
+
+async function loadFilterShellConfig(defaults = DEFAULT_FILTER_SHELL) {
+  try {
+    const placeholders = await fetchPlaceholders();
+    return Object.entries(FILTER_PLACEHOLDER_KEYS).reduce((config, [placeholderKey, shellKey]) => {
+      const value = placeholders[placeholderKey];
+      if (typeof value === 'string' && value.trim()) {
+        config[shellKey] = value.trim();
+      }
+      return config;
+    }, { ...defaults });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn('[product-grid] using fallback filter placeholder copy', error);
     return { ...defaults };
   }
 }
@@ -361,10 +430,10 @@ function renderCatalog(block, products, opts, filterShell = DEFAULT_FILTER_SHELL
   // Create layout structure for renderCatalogPage
   block.innerHTML = `
     <div class="catalog-layout">
-      <aside id="filter-panel" class="filter-panel" aria-label="Filter products"></aside>
-      <section id="product-grid-section" aria-label="Products">
+      <aside id="filter-panel" class="filter-panel" aria-label="${sanitizeText(filterShell.panelAriaLabel)}"></aside>
+      <section id="product-grid-section" aria-label="${sanitizeText(filterShell.productSectionAriaLabel)}">
         <h1>${sanitizeText(opts.title || 'Products')}</h1>
-        <div id="product-grid" class="product-grid" role="list" aria-label="Products results"></div>
+        <div id="product-grid" class="product-grid" role="list" aria-label="${sanitizeText(filterShell.productResultsAriaLabel)}"></div>
       </section>
     </div>
   `;
@@ -538,8 +607,8 @@ function renderPriceRange(filtersMeta, selected, suffix = '', shell = DEFAULT_FI
       <div class="price-range-dual" data-price-range>
         <div class="price-range-track" aria-hidden="true"></div>
         <div class="price-range-progress" aria-hidden="true"></div>
-        <input id="min-price-slider${id}" class="price-range-slider price-range-slider-min" type="range" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.minPrice}" aria-label="Minimum price slider">
-        <input id="max-price-slider${id}" class="price-range-slider price-range-slider-max" type="range" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.maxPrice}" aria-label="Maximum price slider">
+        <input id="min-price-slider${id}" class="price-range-slider price-range-slider-min" type="range" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.minPrice}" aria-label="${sanitizeText(shell.minPriceSliderLabel)}">
+        <input id="max-price-slider${id}" class="price-range-slider price-range-slider-max" type="range" min="0" max="${filtersMeta.maxPrice}" step="100" value="${selected.maxPrice}" aria-label="${sanitizeText(shell.maxPriceSliderLabel)}">
       </div>
       <div class="range-scale"><span>${formatCurrency(0)}</span><span>${formatCurrency(filtersMeta.maxPrice)}</span></div>
     </div>
@@ -569,7 +638,7 @@ function setFilterPanelVisibility(panel, filterToggleBtn, forceOpen) {
   backdrop?.classList.toggle('hidden', !(shouldOpen && !isDesktop));
 }
 
-function syncFilterControls(panel, filtersMeta, selected, sortMenu) {
+function syncFilterControls(panel, filtersMeta, selected, sortMenu, shell = DEFAULT_FILTER_SHELL) {
   // Sync number inputs and sliders
   [
     { id: 'min-price', isMin: true },
@@ -643,7 +712,7 @@ function syncFilterControls(panel, filtersMeta, selected, sortMenu) {
     if (!(label instanceof HTMLElement)) return;
     const group = label.dataset.mobileFilterValue;
     const active = panel.querySelector(`[data-mobile-filter-option="${group}"].is-active`);
-    if (active instanceof HTMLButtonElement) label.textContent = active.dataset.label || active.textContent || 'All';
+    if (active instanceof HTMLButtonElement) label.textContent = active.dataset.label || active.textContent || shell.allLabel;
   });
 
   // Sync sort menu active state
@@ -696,18 +765,18 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null,
   const selected = getCatalogDefaults(filtersMeta, includeGender, forcedGender);
 
   // 3. Build mobile dropdown helpers
-  const CATEGORY_LABELS_MAP = {
-    training: 'Training Shoes',
-    running: 'Running Shoes',
-    multisport: 'Multisport Shoes',
-    casual: 'Casual Shoes',
-    sneakers: 'Sneakers',
+  const categoryLabels = {
+    training: shell.trainingCategoryLabel,
+    running: shell.runningCategoryLabel,
+    multisport: shell.multisportCategoryLabel,
+    casual: shell.casualCategoryLabel,
+    sneakers: shell.sneakersCategoryLabel,
   };
 
   const mobileCategoryGroup = buildMobileDropdownGroup(
     'category',
     shell.categoryLabel,
-    filtersMeta.categories.map((c) => ({ value: c, label: CATEGORY_LABELS_MAP[c] || c })),
+    filtersMeta.categories.map((c) => ({ value: c, label: categoryLabels[c] || c })),
     shell.allCategoriesLabel,
   );
   const mobileSizeGroup = buildMobileDropdownGroup(
@@ -733,7 +802,7 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null,
 
   // 4. Inject desktop + mobile filter forms into panel
   panel.innerHTML = `
-    <form id="catalog-filter-form" class="filter-desktop-form" aria-label="Product filters">
+    <form id="catalog-filter-form" class="filter-desktop-form" aria-label="${sanitizeText(shell.desktopFormAriaLabel)}">
       <div class="filter-panel-head">
         <h2>${sanitizeText(shell.title)}</h2>
         <div class="filter-panel-head-actions">
@@ -744,7 +813,7 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null,
       <div class="filter-group filter-group-range"><h3>${sanitizeText(shell.priceLabel)}</h3>${renderPriceRange(filtersMeta, selected, '', shell)}</div>
       ${includeGender ? `<div class="filter-group"><h3>${sanitizeText(shell.genderLabel)}</h3><div class="checkbox-list filter-options-inline"><label class="filter-chip"><input type="radio" name="gender" value="all" checked><span>${sanitizeText(shell.allLabel)}</span></label><label class="filter-chip"><input type="radio" name="gender" value="mens"><span>${sanitizeText(shell.mensLabel)}</span></label><label class="filter-chip"><input type="radio" name="gender" value="womens"><span>${sanitizeText(shell.womensLabel)}</span></label></div></div>` : ''}
       <div class="filter-group"><h3>${sanitizeText(shell.categoryLabel)}</h3><div class="checkbox-list filter-options-grid">
-        ${filtersMeta.categories.map((c) => `<label class="filter-chip"><input type="checkbox" name="category" value="${sanitizeText(c)}"><span>${sanitizeText(CATEGORY_LABELS_MAP[c] || c)}</span></label>`).join('')}
+        ${filtersMeta.categories.map((c) => `<label class="filter-chip"><input type="checkbox" name="category" value="${sanitizeText(c)}"><span>${sanitizeText(categoryLabels[c] || c)}</span></label>`).join('')}
       </div></div>
       <div class="filter-group"><h3>${sanitizeText(shell.sizeLabel)}</h3><div class="checkbox-list filter-options-grid">
         ${filtersMeta.sizes.map((s) => `<label class="filter-chip"><input type="checkbox" name="size" value="${sanitizeText(s)}"><span>${sanitizeText(s)}</span></label>`).join('')}
@@ -754,7 +823,7 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null,
       </div></div>
     </form>
 
-    <form id="catalog-filter-mobile" class="filter-mobile-form" aria-label="Product filters for smaller screens">
+    <form id="catalog-filter-mobile" class="filter-mobile-form" aria-label="${sanitizeText(shell.mobileFormAriaLabel)}">
       <div class="filter-mobile-bar">
         <div><p class="filter-mobile-kicker">${sanitizeText(shell.mobileKicker)}</p><h2>${sanitizeText(shell.mobileTitle)}</h2></div>
         <div class="filter-mobile-actions">
@@ -895,7 +964,7 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null,
 
   // 6. Render function
   function doRender() {
-    syncFilterControls(panel, filtersMeta, selected, sortMenu);
+    syncFilterControls(panel, filtersMeta, selected, sortMenu, shell);
     renderFiltered(products, selected, grid, shell);
   }
 
