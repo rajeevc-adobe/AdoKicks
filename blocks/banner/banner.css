@@ -112,6 +112,12 @@
 }
 
 @media (max-width: 680px) {
+  main:has(.hero.block) .banner-wrapper,
+  main:has(.hero.block) .banner-container {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   .banner-card,
   .gender-banner { min-height: 290px; }
 
