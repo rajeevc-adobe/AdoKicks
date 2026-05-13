@@ -266,15 +266,14 @@
 @media (max-width: 480px) {
   main:has(.hero.block) .trending-wrap .product-grid,
   main:has(.hero.block) .trending-grid {
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap: 0.65rem;
-  }
-}
-
-@media (max-width: 360px) {
-  main:has(.hero.block) .trending-wrap .product-grid,
-  main:has(.hero.block) .trending-grid {
     grid-template-columns: 1fr;
+    gap: 0.8rem;
+    align-items: start;
+  }
+
+  main:has(.hero.block) .trending-wrap .product-card,
+  main:has(.hero.block) .trending-grid .product-card {
+    height: auto;
   }
 }
 
