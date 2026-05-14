@@ -215,7 +215,6 @@ async function decorateCategory(block, opts = {}) {
               <div class="category-card-content">
                 <p class="category-card-kicker">${sanitizeText(card.collection)}</p>
                 <h2>${sanitizeText(card.title)}</h2>
-                ${card.desc ? `<p class="category-card-copy">${sanitizeText(card.desc)}</p>` : ''}
                 <div class="category-card-meta">
                   <span class="category-card-pill">${sanitizeText(card.category)}</span>
                   ${card.price ? `<span class="category-card-pill">From ${sanitizeText(formatCurrency(card.price))}</span>` : '<span class="category-card-pill">Explore</span>'}
