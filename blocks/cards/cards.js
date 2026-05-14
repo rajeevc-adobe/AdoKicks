@@ -6,6 +6,8 @@ export default async function decorate(block) {
   const variation = getCardsVariation(block, opts);
   if (variation) block.classList.add(variation);
   if (variation === 'about-hero') { decorateAboutHero(block, opts); return; }
+  if (variation === 'banner-men') { decorateBanner(block, 'men-banner'); return; }
+  if (variation === 'banner-women') { decorateBanner(block, 'women-banner'); return; }
   if (variation === 'composed') { decorateComposed(block); return; }
   if (variation === 'about-strip') { decorateAboutStrip(block); return; }
   if (variation === 'metrics') { decorateMetrics(block); return; }
@@ -27,7 +29,7 @@ function readOpts(block) {
 }
 
 function getCardsVariation(block, opts) {
-  const knownVariations = ['about-hero', 'about-strip', 'category', 'categories', 'composed', 'metrics', 'timeline', 'values'];
+  const knownVariations = ['about-hero', 'about-strip', 'banner-men', 'banner-women', 'category', 'categories', 'composed', 'metrics', 'timeline', 'values'];
   const authored = (opts.variation || '').toLowerCase();
   if (knownVariations.includes(authored)) return authored;
 
@@ -35,6 +37,30 @@ function getCardsVariation(block, opts) {
   if (classVariation) return classVariation;
 
   return null;
+}
+
+function decorateBanner(block, cardClass) {
+  const rows = contentRows(block);
+  const firstRow = rows[0] ? [...rows[0].children] : [];
+  const secondRow = rows[1] ? [...rows[1].children] : [];
+  const imageCell = firstRow[0];
+  const title = firstRow[1]?.textContent?.trim() || '';
+  const subtitle = secondRow[0]?.textContent?.trim() || '';
+  const link = secondRow[1]?.querySelector('a') || imageCell?.querySelector('a');
+  const href = link?.getAttribute('href') || '#';
+  const imageSrc = imageSrcFromCell(imageCell);
+  const imageAlt = imageAltFromCell(imageCell, title);
+
+  block.innerHTML = `
+    <div class="cards-banner-full single-gender-banner">
+      <a class="gender-banner ${cardClass}" href="${sanitizeText(href)}" aria-label="${sanitizeText(title)}">
+        ${imageSrc ? `<img src="${sanitizeText(imageSrc)}" alt="${sanitizeText(imageAlt)}" loading="lazy">` : ''}
+        <div class="banner-text">
+          <h2>${sanitizeText(title)}</h2>
+          ${subtitle ? `<p>${sanitizeText(subtitle)}</p>` : ''}
+        </div>
+      </a>
+    </div>`;
 }
 
 function contentRows(block) {

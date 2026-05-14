@@ -44,6 +44,50 @@ function parseBoolean(value) {
   return true;
 }
 
+function readUIConfig(block) {
+  const config = {};
+  [...block.children].forEach((row) => {
+    const cells = [...row.children];
+    if (cells.length < 2) return;
+    const key = normalizeKey(cells[0]?.textContent || '');
+    const value = normalizeText(cells[1]?.textContent || '');
+    if (key && value) config[key] = value;
+  });
+
+  return {
+    galleryAriaLabel: config['gallery aria label'] || 'Product image gallery',
+    galleryControlsAriaLabel: config['gallery controls aria label'] || 'Gallery controls',
+    previousImageLabel: config['previous image label'] || 'Prev',
+    previousImageAriaLabel: config['previous image aria label'] || 'View previous image',
+    nextImageLabel: config['next image label'] || 'Next',
+    nextImageAriaLabel: config['next image aria label'] || 'View next image',
+    thumbnailsAriaLabel: config['thumbnails aria label'] || 'Image thumbnails',
+    thumbnailAriaPrefix: config['thumbnail aria prefix'] || 'Select image',
+    purchaseDetailsAriaLabel: config['purchase details aria label'] || 'Product purchase details',
+    categoryLabel: config['category label'] || 'Category',
+    ratingLabel: config['rating label'] || 'Rating',
+    reviewsLabel: config['reviews label'] || 'reviews',
+    selectSizeTitle: config['select size title'] || 'Select Size',
+    sizeGroupAriaLabel: config['size group aria label'] || 'Available sizes',
+    sizeOptionAriaPrefix: config['size option aria prefix'] || 'Select size',
+    actionsAriaLabel: config['actions aria label'] || 'Purchase actions',
+    addToBagLabel: config['add to bag label'] || 'Add to Bag',
+    addToBagAriaLabel: config['add to bag aria label'] || 'Add item to bag',
+    wishlistAriaLabel: config['wishlist aria label'] || 'Toggle wishlist',
+    wishlistTitle: config['wishlist title'] || 'Wishlist',
+    descriptionTitle: config['description title'] || 'Description',
+    selectSizeError: config['select size error'] || 'Select a size first.',
+    addedToBagSuffix: config['added to bag suffix'] || 'added to bag',
+    wishlistAddedMessage: config['wishlist added message'] || 'Added to wishlist',
+    wishlistRemovedMessage: config['wishlist removed message'] || 'Removed from wishlist',
+    notFoundEyebrow: config['not found eyebrow'] || '404',
+    notFoundTitle: config['not found title'] || 'Product not found',
+    notFoundText: config['not found text'] || "The product you're looking for doesn't exist or has been removed.",
+    notFoundCtaLabel: config['not found cta label'] || 'Browse featured shoes',
+    notFoundCtaHref: config['not found cta href'] || '/featured',
+  };
+}
+
 function getHeadingNodes(block) {
   return [...block.querySelectorAll('h1, h2, h3, h4, h5, h6')];
 }
@@ -176,20 +220,20 @@ function parseDAContent(block) {
   return product.title ? product : null;
 }
 
-function buildGalleryHTML(images, imageIndex, productTitle) {
+function buildGalleryHTML(images, imageIndex, productTitle, config) {
   const safeImages = images.length ? images : ['/adokicks.png'];
   return `
-    <section class="gallery" aria-label="Product image gallery">
+    <section class="gallery" aria-label="${sanitize(config.galleryAriaLabel)}">
       <div class="gallery-main">
         <img src="${sanitize(safeImages[imageIndex])}" alt="${sanitize(productTitle)} image ${imageIndex + 1}" width="560" height="560">
-        <div class="gallery-nav" role="group" aria-label="Gallery controls">
-          <button id="img-prev" class="button secondary" type="button" aria-label="View previous image">Prev</button>
-          <button id="img-next" class="button secondary" type="button" aria-label="View next image">Next</button>
+        <div class="gallery-nav" role="group" aria-label="${sanitize(config.galleryControlsAriaLabel)}">
+          <button id="img-prev" class="button secondary" type="button" aria-label="${sanitize(config.previousImageAriaLabel)}">${sanitize(config.previousImageLabel)}</button>
+          <button id="img-next" class="button secondary" type="button" aria-label="${sanitize(config.nextImageAriaLabel)}">${sanitize(config.nextImageLabel)}</button>
         </div>
       </div>
-      <div class="thumb-row" role="list" aria-label="Image thumbnails">
+      <div class="thumb-row" role="list" aria-label="${sanitize(config.thumbnailsAriaLabel)}">
         ${safeImages.map((img, idx) => `
-          <button type="button" data-img-index="${idx}" aria-label="Select image ${idx + 1}" class="${idx === imageIndex ? 'is-active' : ''}">
+          <button type="button" data-img-index="${idx}" aria-label="${sanitize(config.thumbnailAriaPrefix)} ${idx + 1}" class="${idx === imageIndex ? 'is-active' : ''}">
             <img src="${sanitize(img)}" alt="${sanitize(productTitle)} thumbnail ${idx + 1}" width="72" height="72" loading="lazy">
           </button>
         `).join('')}
@@ -198,9 +242,9 @@ function buildGalleryHTML(images, imageIndex, productTitle) {
   `;
 }
 
-function buildProductInfoHTML(product, selectedSize) {
+function buildProductInfoHTML(product, selectedSize, config) {
   return `
-    <section class="section-card product-info-card" aria-label="Product purchase details">
+    <section class="section-card product-info-card" aria-label="${sanitize(config.purchaseDetailsAriaLabel)}">
       <h1 class="product-title">${sanitize(product.brand)} - ${sanitize(product.title)}</h1>
 
       <p class="price-line product-price-line">
@@ -209,28 +253,28 @@ function buildProductInfoHTML(product, selectedSize) {
       </p>
 
       <p class="product-meta">
-        Category: ${sanitize(CATEGORY_LABELS[product.category] || product.categoryLabel || product.category || 'Sneakers')}
-        | Rating: ${sanitize(product.rating || 0)} (${sanitize(product.reviews || 0)} reviews)
+        ${sanitize(config.categoryLabel)}: ${sanitize(CATEGORY_LABELS[product.category] || product.categoryLabel || product.category || 'Sneakers')}
+        | ${sanitize(config.ratingLabel)}: ${sanitize(product.rating || 0)} (${sanitize(product.reviews || 0)} ${sanitize(config.reviewsLabel)})
       </p>
 
-      <h2 class="product-section-title">Select Size</h2>
-      <div class="product-size-grid" role="group" aria-label="Available sizes">
+      <h2 class="product-section-title">${sanitize(config.selectSizeTitle)}</h2>
+      <div class="product-size-grid" role="group" aria-label="${sanitize(config.sizeGroupAriaLabel)}">
         ${(product.sizes || []).map((size) => `
           <button type="button" data-size-option="${sanitize(size)}"
             class="product-size-pill ${String(selectedSize) === String(size) ? 'is-active' : ''}"
-            aria-label="Select size ${sanitize(size)}">${sanitize(size)}</button>
+            aria-label="${sanitize(config.sizeOptionAriaPrefix)} ${sanitize(size)}">${sanitize(size)}</button>
         `).join('')}
       </div>
 
-      <div class="product-buy-row" aria-label="Purchase actions">
+      <div class="product-buy-row" aria-label="${sanitize(config.actionsAriaLabel)}">
         <button id="product-add-cart" class="button primary product-buy-btn" type="button"
-          aria-label="Add item to bag">Add to Bag</button>
+          aria-label="${sanitize(config.addToBagAriaLabel)}">${sanitize(config.addToBagLabel)}</button>
         <button id="product-wishlist"
           class="heart-btn ${isWishlisted(product.id) ? 'active' : ''}"
-          type="button" aria-label="Toggle wishlist" title="Wishlist">&#10084;</button>
+          type="button" aria-label="${sanitize(config.wishlistAriaLabel)}" title="${sanitize(config.wishlistTitle)}">&#10084;</button>
       </div>
 
-      <h2 class="product-section-title">Description</h2>
+      <h2 class="product-section-title">${sanitize(config.descriptionTitle)}</h2>
       <p class="product-description-text">${sanitize(product.description || '')}</p>
     </section>
   `;
@@ -256,7 +300,7 @@ function bindGalleryEvents(wrap, images, getIndex, setIndex, rerender) {
   });
 }
 
-function bindProductInfoEvents(wrap, product, getSelectedSize, setSelectedSize, rerender) {
+function bindProductInfoEvents(wrap, product, getSelectedSize, setSelectedSize, rerender, config) {
   wrap.querySelectorAll('button[data-size-option]').forEach((btn) => {
     btn.addEventListener('click', () => {
       setSelectedSize(btn.getAttribute('data-size-option') || '');
@@ -271,18 +315,18 @@ function bindProductInfoEvents(wrap, product, getSelectedSize, setSelectedSize, 
   wrap.querySelector('#product-add-cart')?.addEventListener('click', () => {
     const size = getSelectedSize();
     if (!size) {
-      toast('Select a size first.', 'error');
+      toast(config.selectSizeError, 'error');
       wrap.querySelector('.product-size-grid')?.classList.add('shake');
       setTimeout(() => wrap.querySelector('.product-size-grid')?.classList.remove('shake'), 400);
       return;
     }
     const ok = addToCart(product.id, size, 1);
-    if (ok) toast(`${product.title} (UK ${size}) added to bag`, 'success');
+    if (ok) toast(`${product.title} (UK ${size}) ${config.addedToBagSuffix}`, 'success');
   });
 
   wrap.querySelector('#product-wishlist')?.addEventListener('click', () => {
     const added = toggleWishlist(product.id);
-    toast(added ? 'Added to wishlist' : 'Removed from wishlist', 'success');
+    toast(added ? config.wishlistAddedMessage : config.wishlistRemovedMessage, 'success');
     rerender();
   });
 }
@@ -290,6 +334,7 @@ function bindProductInfoEvents(wrap, product, getSelectedSize, setSelectedSize, 
 export default async function decorate(block) {
   const id = params().get('id') || '';
 
+  const uiConfig = readUIConfig(block);
   const daProduct = parseDAContent(block);
 
   block.innerHTML = '<div class="pg-loading"><span class="pg-spinner"></span></div>';
@@ -304,15 +349,15 @@ export default async function decorate(block) {
     if (!product) {
       block.innerHTML = `
         <div class="product-not-found">
-          <p class="eyebrow">404</p>
-          <h2>Product not found</h2>
-          <p>The product you're looking for doesn't exist or has been removed.</p>
-          <a href="featured.html" class="button primary">Browse featured shoes</a>
+          <p class="eyebrow">${sanitize(uiConfig.notFoundEyebrow)}</p>
+          <h2>${sanitize(uiConfig.notFoundTitle)}</h2>
+          <p>${sanitize(uiConfig.notFoundText)}</p>
+          <a href="${sanitize(uiConfig.notFoundCtaHref)}" class="button primary">${sanitize(uiConfig.notFoundCtaLabel)}</a>
         </div>`;
       return;
     }
 
-    document.title = `${product.brand} – ${product.title} | Adokicks`;
+    document.title = `${product.brand} - ${product.title} | Adokicks`;
 
     let imageIndex = 0;
     let selectedSize = '';
@@ -322,8 +367,8 @@ export default async function decorate(block) {
     function renderDetail() {
       block.innerHTML = `
         <div class="product-detail-layout">
-          ${buildGalleryHTML(images, imageIndex, product.title)}
-          ${buildProductInfoHTML(product, selectedSize)}
+          ${buildGalleryHTML(images, imageIndex, product.title, uiConfig)}
+          ${buildProductInfoHTML(product, selectedSize, uiConfig)}
         </div>
       `;
 
@@ -333,6 +378,7 @@ export default async function decorate(block) {
         () => imageIndex,
         (i) => { imageIndex = i; },
         renderDetail,
+        uiConfig,
       );
 
       bindProductInfoEvents(

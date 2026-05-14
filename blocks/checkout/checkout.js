@@ -32,6 +32,48 @@ function getConfig(block) {
     subtitle: config.subtitle || 'Review your order, confirm delivery details, and place it in one clean step.',
     panelTitle: config['panel title'] || 'Delivery details',
     panelText: config['panel text'] || "We'll use these details to ship your order and keep you updated.",
+    checkoutFlowLabel: config['checkout flow label'] || 'Checkout flow',
+    formAriaLabel: config['form aria label'] || 'Shipping address form',
+    nameLabel: config['name label'] || 'Name',
+    nameAriaLabel: config['name aria label'] || 'Full name',
+    emailLabel: config['email label'] || 'Email',
+    emailAriaLabel: config['email aria label'] || 'Email address',
+    phoneLabel: config['phone label'] || 'Phone Number',
+    phoneAriaLabel: config['phone aria label'] || 'Phone number',
+    address1Label: config['address line 1 label'] || 'Address Line 1',
+    address1AriaLabel: config['address line 1 aria label'] || 'Address line 1',
+    address2Label: config['address line 2 label'] || 'Address Line 2',
+    address2AriaLabel: config['address line 2 aria label'] || 'Address line 2',
+    cityLabel: config['city label'] || 'City',
+    cityAriaLabel: config['city aria label'] || 'City',
+    stateLabel: config['state label'] || 'State',
+    stateAriaLabel: config['state aria label'] || 'State',
+    zipcodeLabel: config['zipcode label'] || 'Zipcode',
+    zipcodeAriaLabel: config['zipcode aria label'] || 'Zipcode',
+    submitLabel: config['submit label'] || 'Place Order',
+    submitAriaLabel: config['submit aria label'] || 'Place your order',
+    summaryAriaLabel: config['summary aria label'] || 'Order summary',
+    emptyEyebrow: config['empty eyebrow'] || 'Nothing in your bag',
+    emptyTitle: config['empty title'] || 'Your cart is empty',
+    emptyText: config['empty text'] || 'Add a pair of shoes before checking out.',
+    emptyCtaLabel: config['empty cta label'] || 'Browse featured picks',
+    emptyCtaHref: config['empty cta href'] || '/featured',
+    summaryEyebrow: config['summary eyebrow'] || 'Order review',
+    summaryItemsSuffix: config['summary items suffix'] || 'ready to ship.',
+    sizeLabel: config['size label'] || 'Size',
+    quantityLabel: config['quantity label'] || 'Qty',
+    eachLabel: config['each label'] || 'each',
+    subtotalLabel: config['subtotal label'] || 'Subtotal',
+    deliveryLabel: config['delivery label'] || 'Delivery',
+    deliveryValue: config['delivery value'] || 'Free',
+    totalLabel: config['total label'] || 'Total',
+    checkoutNote: config['checkout note'] || 'Secure payment processing. Your order confirmation will appear after submission.',
+    invalidNameMessage: config['invalid name message'] || 'Enter a valid name.',
+    invalidEmailMessage: config['invalid email message'] || 'Enter a valid email address.',
+    invalidPhoneMessage: config['invalid phone message'] || 'Enter a valid phone number.',
+    missingAddressMessage: config['missing address message'] || 'Address line 1 is required.',
+    missingCityStateMessage: config['missing city state message'] || 'City and state are required.',
+    invalidZipcodeMessage: config['invalid zipcode message'] || 'Enter a valid zipcode.',
   };
 }
 
@@ -58,45 +100,45 @@ function renderShell(block, config) {
       <h1>${sanitize(config.title)}</h1>
       <p class="page-subtitle">${sanitize(config.subtitle)}</p>
     </section>
-    <section class="checkout-layout" aria-label="Checkout flow">
-      <section class="section-card checkout-panel" aria-label="Shipping address form">
+    <section class="checkout-layout" aria-label="${sanitize(config.checkoutFlowLabel)}">
+      <section class="section-card checkout-panel" aria-label="${sanitize(config.formAriaLabel)}">
         <div class="checkout-section-head">
           <h2>${sanitize(config.panelTitle)}</h2>
           <p>${sanitize(config.panelText)}</p>
         </div>
         <form id="checkout-form" class="checkout-form" novalidate>
-          <label for="checkout-name">Name</label>
-          <input id="checkout-name" name="name" type="text" autocomplete="name" required aria-label="Full name">
-          <label for="checkout-email">Email</label>
-          <input id="checkout-email" name="email" type="email" autocomplete="email" required aria-label="Email address">
-          <label for="checkout-phone">Phone Number</label>
-          <input id="checkout-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" required aria-label="Phone number">
-          <label for="checkout-address1">Address Line 1</label>
-          <input id="checkout-address1" name="address1" type="text" autocomplete="address-line1" required aria-label="Address line 1">
-          <label for="checkout-address2">Address Line 2</label>
-          <input id="checkout-address2" name="address2" type="text" autocomplete="address-line2" aria-label="Address line 2">
-          <label for="checkout-city">City</label>
-          <input id="checkout-city" name="city" type="text" autocomplete="address-level2" required aria-label="City">
-          <label for="checkout-state">State</label>
-          <input id="checkout-state" name="state" type="text" autocomplete="address-level1" required aria-label="State">
-          <label for="checkout-zipcode">Zipcode</label>
-          <input id="checkout-zipcode" name="zipcode" type="text" inputmode="numeric" autocomplete="postal-code" required aria-label="Zipcode">
-          <button type="submit" class="btn-primary" aria-label="Place your order">Place Order</button>
+          <label for="checkout-name">${sanitize(config.nameLabel)}</label>
+          <input id="checkout-name" name="name" type="text" autocomplete="name" required aria-label="${sanitize(config.nameAriaLabel)}">
+          <label for="checkout-email">${sanitize(config.emailLabel)}</label>
+          <input id="checkout-email" name="email" type="email" autocomplete="email" required aria-label="${sanitize(config.emailAriaLabel)}">
+          <label for="checkout-phone">${sanitize(config.phoneLabel)}</label>
+          <input id="checkout-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" required aria-label="${sanitize(config.phoneAriaLabel)}">
+          <label for="checkout-address1">${sanitize(config.address1Label)}</label>
+          <input id="checkout-address1" name="address1" type="text" autocomplete="address-line1" required aria-label="${sanitize(config.address1AriaLabel)}">
+          <label for="checkout-address2">${sanitize(config.address2Label)}</label>
+          <input id="checkout-address2" name="address2" type="text" autocomplete="address-line2" aria-label="${sanitize(config.address2AriaLabel)}">
+          <label for="checkout-city">${sanitize(config.cityLabel)}</label>
+          <input id="checkout-city" name="city" type="text" autocomplete="address-level2" required aria-label="${sanitize(config.cityAriaLabel)}">
+          <label for="checkout-state">${sanitize(config.stateLabel)}</label>
+          <input id="checkout-state" name="state" type="text" autocomplete="address-level1" required aria-label="${sanitize(config.stateAriaLabel)}">
+          <label for="checkout-zipcode">${sanitize(config.zipcodeLabel)}</label>
+          <input id="checkout-zipcode" name="zipcode" type="text" inputmode="numeric" autocomplete="postal-code" required aria-label="${sanitize(config.zipcodeAriaLabel)}">
+          <button type="submit" class="btn-primary" aria-label="${sanitize(config.submitAriaLabel)}">${sanitize(config.submitLabel)}</button>
         </form>
       </section>
-      <aside id="order-summary" class="order-summary section-card" aria-label="Order summary"></aside>
+      <aside id="order-summary" class="order-summary section-card" aria-label="${sanitize(config.summaryAriaLabel)}"></aside>
     </section>
   `;
 }
 
-function renderSummary(summary, cart, byId) {
+function renderSummary(summary, cart, byId, config) {
   if (!cart.length) {
     summary.innerHTML = `
       <div class="checkout-empty">
-        <p class="eyebrow">Nothing in your bag</p>
-        <h2>Your cart is empty</h2>
-        <p>Add a pair of shoes before checking out.</p>
-        <a class="btn-primary" href="/featured">Browse featured picks</a>
+        <p class="eyebrow">${sanitize(config.emptyEyebrow)}</p>
+        <h2>${sanitize(config.emptyTitle)}</h2>
+        <p>${sanitize(config.emptyText)}</p>
+        <a class="btn-primary" href="${sanitize(config.emptyCtaHref)}">${sanitize(config.emptyCtaLabel)}</a>
       </div>
     `;
     return;
@@ -106,8 +148,8 @@ function renderSummary(summary, cart, byId) {
   summary.innerHTML = `
     <div class="checkout-summary-card">
       <div class="checkout-summary-head">
-        <p class="eyebrow">Order review</p>
-        <p class="eyebrow">${cart.length} item${cart.length === 1 ? '' : 's'} ready to ship.</p>
+        <p class="eyebrow">${sanitize(config.summaryEyebrow)}</p>
+        <p class="eyebrow">${cart.length} item${cart.length === 1 ? '' : 's'} ${sanitize(config.summaryItemsSuffix)}</p>
       </div>
       <div class="checkout-items-list">
         ${cart.map((item) => {
@@ -122,19 +164,19 @@ function renderSummary(summary, cart, byId) {
                   <h3>${sanitize(product.title)}</h3>
                   <strong>${formatCurrency(itemTotal)}</strong>
                 </div>
-                <p>Size ${sanitize(item.size)} - Qty ${item.qty}</p>
-                <p class="checkout-item-price">${formatCurrency(product.price)} each</p>
+                <p>${sanitize(config.sizeLabel)} ${sanitize(item.size)} - ${sanitize(config.quantityLabel)} ${item.qty}</p>
+                <p class="checkout-item-price">${formatCurrency(product.price)} ${sanitize(config.eachLabel)}</p>
               </div>
             </article>
           `;
   }).join('')}
       </div>
       <div class="checkout-pricing">
-        <div class="summary-row"><span>Subtotal</span><strong>${formatCurrency(subtotal)}</strong></div>
-        <div class="summary-row"><span>Delivery</span><strong>Free</strong></div>
-        <div class="summary-row total-row"><span>Total</span><strong>${formatCurrency(subtotal)}</strong></div>
+        <div class="summary-row"><span>${sanitize(config.subtotalLabel)}</span><strong>${formatCurrency(subtotal)}</strong></div>
+        <div class="summary-row"><span>${sanitize(config.deliveryLabel)}</span><strong>${sanitize(config.deliveryValue)}</strong></div>
+        <div class="summary-row total-row"><span>${sanitize(config.totalLabel)}</span><strong>${formatCurrency(subtotal)}</strong></div>
       </div>
-      <p class="checkout-note">Secure payment processing. Your order confirmation will appear after submission.</p>
+      <p class="checkout-note">${sanitize(config.checkoutNote)}</p>
     </div>
   `;
 }
@@ -158,7 +200,7 @@ export default async function decorate(block) {
 
   block.querySelector('#checkout-name').value = user.name || '';
   block.querySelector('#checkout-phone').value = user.phone || '';
-  renderSummary(summary, cart, byId);
+  renderSummary(summary, cart, byId, config);
 
   if (!cart.length && submitButton instanceof HTMLButtonElement) {
     submitButton.disabled = true;
@@ -175,12 +217,12 @@ export default async function decorate(block) {
     const stateName = String(payload.state || '').trim();
     const zipcode = String(payload.zipcode || '').trim();
 
-    if (!validateName(name)) { toast('Enter a valid name.'); return; }
-    if (!validateEmail(email)) { toast('Enter a valid email address.'); return; }
-    if (!validatePhone(phone)) { toast('Enter a valid phone number.'); return; }
-    if (!address1) { toast('Address line 1 is required.'); return; }
-    if (!city || !stateName) { toast('City and state are required.'); return; }
-    if (!validateZip(zipcode)) { toast('Enter a valid zipcode.'); return; }
+    if (!validateName(name)) { toast(config.invalidNameMessage); return; }
+    if (!validateEmail(email)) { toast(config.invalidEmailMessage); return; }
+    if (!validatePhone(phone)) { toast(config.invalidPhoneMessage); return; }
+    if (!address1) { toast(config.missingAddressMessage); return; }
+    if (!city || !stateName) { toast(config.missingCityStateMessage); return; }
+    if (!validateZip(zipcode)) { toast(config.invalidZipcodeMessage); return; }
 
     const order = placeOrder(cart, payload, byId);
     window.location.href = `/order-confirmation?orderId=${encodeURIComponent(order.id)}`;

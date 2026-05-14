@@ -5,6 +5,122 @@
 .simple-card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
 .simple-card-label { padding: var(--spacing-md); font-weight: 600; font-size: var(--font-size-sm); color: var(--color-text); text-align: center; }
 
+/* Banner cards */
+.cards.banner-men,
+.cards.banner-women {
+  display: block;
+  width: 100%;
+}
+
+.cards.banner-men .cards-banner-full,
+.cards.banner-women .cards-banner-full {
+  display: grid;
+  gap: 1rem;
+}
+
+.cards.banner-men .gender-banner,
+.cards.banner-women .gender-banner {
+  min-height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  color: #fff;
+  border: 3px solid #dc2626;
+  display: block;
+  text-decoration: none;
+  background: transparent;
+}
+
+.cards.banner-men .gender-banner::before,
+.cards.banner-women .gender-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(120deg, rgba(0,0,0,0.7), rgba(0,0,0,0.5));
+}
+
+.cards.banner-men .gender-banner img,
+.cards.banner-women .gender-banner img {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 56%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  z-index: 1;
+}
+
+.cards.banner-men .banner-text,
+.cards.banner-women .banner-text {
+  position: relative;
+  z-index: 3;
+  padding: 1.5rem;
+  min-height: 380px;
+  display: grid;
+  align-content: end;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.cards.banner-men .banner-text {
+  padding-right: 48%;
+}
+
+.cards.banner-women .banner-text {
+  padding-left: 48%;
+  text-align: right;
+}
+
+.cards.banner-men .gender-banner h2,
+.cards.banner-men .gender-banner p,
+.cards.banner-women .gender-banner h2,
+.cards.banner-women .gender-banner p {
+  margin: 0;
+}
+
+.cards.banner-men .gender-banner img { right: 0; }
+.cards.banner-women .gender-banner img { left: 0; }
+
+@media (max-width: 1024px) {
+  .cards.banner-men .gender-banner,
+  .cards.banner-women .gender-banner { min-height: 380px; }
+
+  .cards.banner-men .banner-text,
+  .cards.banner-women .banner-text { min-height: 330px; }
+}
+
+@media (max-width: 680px) {
+  .cards.banner-men .gender-banner,
+  .cards.banner-women .gender-banner { min-height: 290px; }
+
+  .cards.banner-men .gender-banner img,
+  .cards.banner-women .gender-banner img { width: 74%; opacity: 0.95; }
+
+  .cards.banner-men .banner-text,
+  .cards.banner-women .banner-text {
+    min-height: 250px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cards.banner-men .gender-banner,
+  .cards.banner-women .gender-banner { min-height: 255px; }
+
+  .cards.banner-men .gender-banner img,
+  .cards.banner-women .gender-banner img { width: 80%; }
+
+  .cards.banner-men .banner-text,
+  .cards.banner-women .banner-text { min-height: 215px; }
+}
+
+@media (min-width: 1440px) {
+  .cards.banner-men .gender-banner,
+  .cards.banner-women .gender-banner { min-height: 420px; }
+}
+
 main:has(.cards.about-hero) {
   display: grid;
   gap: 1rem;

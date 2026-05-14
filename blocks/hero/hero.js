@@ -31,11 +31,11 @@ function decorateVideo(block) {
 
   block.innerHTML = '';
   const article = document.createElement('article');
-  article.className = 'hero';
+  article.className = 'hero is-loading';
   article.setAttribute('aria-label', 'Hero carousel');
   article.innerHTML = `
     <video class="hero-video" src="${normalizedVideoSrc}"
-      autoplay muted loop playsinline preload="metadata" poster="/adokicks.png"
+      autoplay muted loop playsinline preload="auto"
       aria-label="Adokicks featured hero video" tabindex="-1"></video>
     <div class="hero-overlay">
       <h1 class="hero-title">${slides[0]?.title || ''}</h1>
@@ -50,6 +50,11 @@ function decorateVideo(block) {
 
   const video = article.querySelector('.hero-video');
   if (video) {
+    video.addEventListener('canplay', () => {
+      article.classList.remove('is-loading');
+      article.classList.add('is-ready');
+    }, { once: true });
+
     video.addEventListener('error', () => {
       // Fallback: hide video and show background image
       video.style.display = 'none';

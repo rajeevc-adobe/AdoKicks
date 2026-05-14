@@ -13,8 +13,7 @@
  *   blocks/header/header.js     -> nav, search overlay, cart drawer, profile menu
  *   blocks/hero/hero.js         -> video carousel, slide rotation
  *   blocks/product-grid/...     -> catalog filters, trending, search, wishlist grid
- *   blocks/banner/banner.js     -> gender banners
- *   blocks/cards/cards.js       -> about strip, metrics, values, timeline, categories
+ *   blocks/cards/cards.js       -> banners, about strip, metrics, values, timeline, categories
  *   blocks/product-detail/...   -> PDP gallery, size picker, add-to-cart
  *   blocks/auth/auth.js         -> login / signup forms + SHA-256 hashing
  *   blocks/checkout/checkout.js -> checkout form + order summary
