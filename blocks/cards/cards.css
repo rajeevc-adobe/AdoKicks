@@ -424,14 +424,17 @@ main:has(.cards.categories) {
 
 .cards.category .categories-hero-copy,
 .cards.categories .categories-hero-copy {
-  max-width: 760px;
+  flex: 1 1 auto;
+  max-width: none;
+  min-width: 0;
 }
 
 .cards.category .categories-hero-copy h1,
 .cards.categories .categories-hero-copy h1 {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-size: clamp(1.55rem, 2.25vw, 2.1rem);
   letter-spacing: -0.03em;
+  white-space: nowrap;
 }
 
 .cards.category .categories-hero-stats,
@@ -440,6 +443,7 @@ main:has(.cards.categories) {
   grid-template-columns: repeat(3, minmax(96px, 1fr));
   gap: 0.7rem;
   min-width: min(420px, 100%);
+  flex: 0 0 auto;
 }
 
 .cards.category .categories-hero-stat,
@@ -631,12 +635,15 @@ main:has(.cards.categories) {
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1180px) {
   .cards.category .categories-hero,
   .cards.categories .categories-hero {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+@media (max-width: 1024px) {
 
   .cards.category .categories-hero-stats,
   .cards.categories .categories-hero-stats {
