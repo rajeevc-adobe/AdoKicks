@@ -243,6 +243,8 @@ function buildGalleryHTML(images, imageIndex, productTitle, config) {
 }
 
 function buildProductInfoHTML(product, selectedSize, config) {
+  const wishlisted = isWishlisted(product.id);
+
   return `
     <section class="section-card product-info-card" aria-label="${sanitize(config.purchaseDetailsAriaLabel)}">
       <h1 class="product-title">${sanitize(product.brand)} - ${sanitize(product.title)}</h1>
@@ -270,14 +272,23 @@ function buildProductInfoHTML(product, selectedSize, config) {
         <button id="product-add-cart" class="button primary product-buy-btn" type="button"
           aria-label="${sanitize(config.addToBagAriaLabel)}">${sanitize(config.addToBagLabel)}</button>
         <button id="product-wishlist"
-          class="heart-btn ${isWishlisted(product.id) ? 'active' : ''}"
-          type="button" aria-label="${sanitize(config.wishlistAriaLabel)}" title="${sanitize(config.wishlistTitle)}">&#10084;</button>
+          class="heart-btn ${wishlisted ? 'active' : ''}"
+          type="button" aria-label="${sanitize(config.wishlistAriaLabel)}"
+          aria-pressed="${wishlisted}"
+          title="${sanitize(config.wishlistTitle)}">${wishlisted ? '&#10084;' : '&#9825;'}</button>
       </div>
 
       <h2 class="product-section-title">${sanitize(config.descriptionTitle)}</h2>
       <p class="product-description-text">${sanitize(product.description || '')}</p>
     </section>
   `;
+}
+
+function syncWishlistButton(button, active) {
+  if (!button) return;
+  button.classList.toggle('active', active);
+  button.setAttribute('aria-pressed', String(active));
+  button.innerHTML = active ? '&#10084;' : '&#9825;';
 }
 
 function bindGalleryEvents(wrap, images, getIndex, setIndex, rerender) {
@@ -321,13 +332,16 @@ function bindProductInfoEvents(wrap, product, getSelectedSize, setSelectedSize, 
       return;
     }
     const ok = addToCart(product.id, size, 1);
-    if (ok) toast(`${product.title} (UK ${size}) ${config.addedToBagSuffix}`, 'success');
+    if (ok) {
+      toast(`${product.title} (UK ${size}) ${config.addedToBagSuffix}`, 'success');
+      syncWishlistButton(wrap.querySelector('#product-wishlist'), false);
+    }
   });
 
   wrap.querySelector('#product-wishlist')?.addEventListener('click', () => {
     const added = toggleWishlist(product.id);
     toast(added ? config.wishlistAddedMessage : config.wishlistRemovedMessage, 'success');
-    rerender();
+    syncWishlistButton(wrap.querySelector('#product-wishlist'), added);
   });
 }
 
@@ -378,7 +392,6 @@ export default async function decorate(block) {
         () => imageIndex,
         (i) => { imageIndex = i; },
         renderDetail,
-        uiConfig,
       );
 
       bindProductInfoEvents(
@@ -387,6 +400,7 @@ export default async function decorate(block) {
         () => selectedSize,
         (size) => { selectedSize = size; },
         renderDetail,
+        uiConfig,
       );
     }
 
