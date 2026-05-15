@@ -670,6 +670,18 @@
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
 }
 
+.price-range-control input[type='number']::-webkit-outer-spin-button,
+.price-range-control input[type='number']::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.price-range-control input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 .price-range-dual {
   position: relative;
   height: 24px;

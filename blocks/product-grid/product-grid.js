@@ -943,6 +943,12 @@ function renderCatalogPage(products, includeGender = false, forcedGender = null,
     }
   });
 
+  panel.addEventListener('wheel', (e) => {
+    if (e.target instanceof HTMLInputElement && e.target.type === 'number') {
+      e.target.blur();
+    }
+  }, { passive: true });
+
   // Checkbox change
   panel.addEventListener('change', (e) => {
     const t = e.target;
