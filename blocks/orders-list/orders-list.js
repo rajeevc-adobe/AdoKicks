@@ -130,7 +130,6 @@ function renderOrderDetail(order, list, detail, byId) {
         </aside>
       </div>
       <div class="order-total-bar">
-        <div class="summary-row"><span>Subtotal</span><strong>${formatCurrency(order.subtotal || order.total || 0)}</strong></div>
         <div class="summary-row"><span>Total</span><strong>${formatCurrency(order.total || 0)}</strong></div>
       </div>
     </div>

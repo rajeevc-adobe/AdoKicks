@@ -52,8 +52,8 @@ const DEFAULT_FILTER_SHELL = {
   sneakersCategoryLabel: 'Sneakers',
 };
 
-const PRICE_STEP = 1;
-const PRICE_MIN_GAP = 1;
+const PRICE_STEP = 100;
+const PRICE_MIN_GAP = 100;
 const PRICE_NEAR_GAP = 1000;
 
 const FILTER_PLACEHOLDER_KEYS = {
@@ -704,8 +704,9 @@ function syncFilterControls(panel, filtersMeta, selected, sortMenu, shell = DEFA
     const input = document.getElementById(id);
     if (input instanceof HTMLInputElement) {
       input.value = String(isMin ? selected.minPrice : selected.maxPrice);
-      input.min = String(isMin ? 0 : selected.minPrice);
-      input.max = String(isMin ? selected.maxPrice : filtersMeta.absoluteMaxPrice);
+      input.min = String(isMin ? 0 : selected.minPrice + PRICE_MIN_GAP);
+      input.max = String(isMin ? selected.maxPrice - PRICE_MIN_GAP : filtersMeta.absoluteMaxPrice);
+      input.step = String(PRICE_STEP);
     }
   });
 
@@ -720,6 +721,7 @@ function syncFilterControls(panel, filtersMeta, selected, sortMenu, shell = DEFA
       input.value = String(isMin ? selected.minPrice : selected.maxPrice);
       input.min = '0';
       input.max = String(filtersMeta.absoluteMaxPrice);
+      input.step = String(PRICE_STEP);
     }
   });
 
