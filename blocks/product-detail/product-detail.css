@@ -166,29 +166,10 @@ main:has(.product-detail) {
 
 @media (max-width: 680px) {
   .gallery-main img { height: 300px; }
-
-  .thumb-row {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.35rem;
-    padding: 0.45rem;
-  }
-
-  .thumb-row img {
-    height: 64px;
-  }
 }
 
 @media (max-width: 480px) {
   .gallery-main img { height: 260px; }
-
-  .thumb-row {
-    gap: 0.3rem;
-    padding: 0.4rem;
-  }
-
-  .thumb-row img {
-    height: 64px;
-  }
 }
 
 @media (min-width: 1440px) {
